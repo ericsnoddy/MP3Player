@@ -4,7 +4,7 @@ from tkinter import filedialog
 from os import scandir
 
 from obj.settings import WIDTH, HEIGHT, PAD, BPAD, BSIZE, BG_DEFAULT, FONT_TYPE_REG,  FONT_COLOR, BUTTONS
-from obj.button import Button
+from obj.button import Button, MuteButton
 
 class Console:
     def __init__(self, win):
@@ -110,7 +110,7 @@ class Console:
 
             Button(voldown, 0, row2_y, 'voldown', 'Volume Down'),
             Button(volup, 0, row2_y, 'volup', 'Volume Up')),
-            Button(mute, 0 , row2_y, 'mute', 'Mute Volume'),
+            MuteButton(0, row2_y, 'mute', 'Mute' ),
             Button(menu, 0, row3_y, 'menu', 'Menu'),
             Button(power, 0, row3_y, 'power', 'Power Off'),
 
