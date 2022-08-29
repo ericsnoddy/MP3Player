@@ -24,8 +24,7 @@ class Console:
 
         # setup text, so it's only rendered once during init
         self.text1 = self.font_reg.render('Select music folder', True, FONT_COLOR)
-        self.text2 = self.font_reg.render('Building collection...', True, FONT_COLOR)
-        self.text3 = self.font_reg.render('Name your profile', True, FONT_COLOR)
+        self.text2 = self.font_reg.render('Name your profile', True, FONT_COLOR)
 
         # buttons (requires self.text1)
         self.buttons = pygame.sprite.Group()
@@ -43,11 +42,10 @@ class Console:
                     self.show_setup_button = False
 
         elif not self.collection:
-            self.win.blit(self.text2, ((WIDTH - PAD*2 - self.text2.get_width()) // 2 + PAD, PAD))
             self.build_collection()
 
         elif not self.profile_name:
-            self.win.blit(self.text3, ((WIDTH - PAD*2 - self.text3.get_width()) // 2 + PAD, PAD))
+            self.win.blit(self.text2, ((WIDTH - PAD*2 - self.text2.get_width()) // 2 + PAD, PAD))
             self.profile_name = self.get_user_text()
 
     def build_collection(self):
