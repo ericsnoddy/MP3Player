@@ -7,28 +7,25 @@ from obj.console import Console
 def main():
     
     WIN, clock = init_pygame()
-
     console = Console(WIN)
 
-    # game loop
-    running = True
-    while running:
+    # program loop
+    while True:
 
         # event loop
         
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
+            if event.type == pygame.QUIT or not console.running:
+                pygame.mixer.quit()
+                pygame.quit()
+                sys.exit()
+            
             console.event_handler(event)
         
         console.run()
 
-        pygame.display.flip()
+        pygame.display.update()
         clock.tick(FPS)
-
-    pygame.quit()
-    sys.exit()
 
 def init_pygame():
     
