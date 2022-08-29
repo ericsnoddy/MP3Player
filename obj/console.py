@@ -3,7 +3,7 @@ from pygame.locals import *
 from tkinter import filedialog
 from os import scandir
 
-from obj.settings import WIDTH, PAD, BG_DEFAULT, FONT_TYPE_REG, FONT_TYPE_USER, FONT_COLOR, BUTTONS
+from obj.settings import WIDTH, HEIGHT, PAD, BPAD, BSIZE, BG_DEFAULT, FONT_TYPE_REG,  FONT_COLOR, BUTTONS
 from obj.button import Button
 
 class Console:
@@ -12,41 +12,39 @@ class Console:
         self.win = win
         self.bg = pygame.image.load(BG_DEFAULT).convert()
         self.font_reg = pygame.font.Font(FONT_TYPE_REG, 14)
-        self.user_reg = pygame.font.Font(FONT_TYPE_USER, 14)
 
-        # default flags and user data - could use last in list as a flag the process is complete
-        self.setup_mode = True
+        # default flags and user data
+        self.setup_mode = False
         self.show_setup_button = True
         self.player_ok = False
         self.music_folder = ''
         self.collection = {}
-        self.profile_name = ''
 
-        # setup text, so it's only rendered once during init
-        self.text1 = self.font_reg.render('Select music folder', True, FONT_COLOR)
-        self.text2 = self.font_reg.render('Name your profile', True, FONT_COLOR)
+        # Setup process
+        self.setup_txt = self.font_reg.render('Select music folder', True, FONT_COLOR)
 
-        # buttons (requires self.text1)
+        # buttons (requires self.setup_txt)
         self.buttons = pygame.sprite.Group()
         self.setup_button = pygame.sprite.GroupSingle()
         self.group_buttons()
 
     def setup(self):
-
         if not self.music_folder:
-            self.win.blit(self.text1, ((WIDTH - PAD*2 - self.text1.get_width()) // 2 + PAD, PAD))
+            self.win.blit(self.setup_txt, ((WIDTH - PAD*2 - self.setup_txt.get_width()) // 2 + PAD, PAD))
+            self.setup_button.draw(self.win)
 
-            if self.event.type == MOUSEBUTTONDOWN and [s for s in self.setup_button if s.is_clicked(self.event.pos)]:                                
+            if self.event.type == MOUSEBUTTONDOWN and [s for s in self.setup_button if s.is_clicked(self.event.pos)]:
                 self.music_folder = filedialog.askdirectory( title='Select root music folder' )
-                if self.music_folder:
-                    self.show_setup_button = False
 
         elif not self.collection:
             self.build_collection()
+        else:
+            self.setup_mode = False
 
-        elif not self.profile_name:
-            self.win.blit(self.text2, ((WIDTH - PAD*2 - self.text2.get_width()) // 2 + PAD, PAD))
-            self.profile_name = self.get_user_text()
+    def console(self):
+        pass
+
+
 
     def build_collection(self):
         
@@ -82,31 +80,49 @@ class Console:
         prev = pygame.image.load(BUTTONS['prev']).convert_alpha()
         next = pygame.image.load(BUTTONS['next']).convert_alpha()
         mute = pygame.image.load(BUTTONS['mute']).convert_alpha()
+        muted = pygame.image.load(BUTTONS['muted']).convert_alpha()
         voldown = pygame.image.load(BUTTONS['voldown']).convert_alpha()
         volup = pygame.image.load(BUTTONS['volup']).convert_alpha()
 
         # add setup icon to GroupSingle sprite group
-        menu_pos = ((WIDTH - PAD*2 - menu.get_width()) // 2 + PAD, 
-                            PAD + self.text1.get_height() + PAD) 
-        self.setup_button.add(Button(menu, menu_pos[0], menu_pos[1], 'load', 'load folder'))
+        centeringx = (WIDTH - PAD*2 - menu.get_width()) // 2 + PAD
+        centeringy = PAD + self.setup_txt.get_height() + PAD
+        self.setup_button.add(Button(menu, centeringx, centeringy, 'load', 'load folder'))
 
         # add buttons to sprite group
-        self.buttons.add(
-            Button(menu, 0, 0, 'menu', 'Menu'),
-            Button(stop, 0, 0, 'stop', 'Stop'),
-            Button(play, 0, 0, 'play', 'Play'),
-            Button(pause, 0, 0, 'pause', 'Pause'),
-            Button(rew, 0, 0, 'rew', 'Rewind'),
-            Button(ff, 0, 0, 'ff', 'Fast Forward'),
-            Button(prev, 0, 0, 'prev', 'Previous'),
-            Button(next, 0, 0, 'next', 'Next'),
-            Button(mute, 0 ,0, 'mute', 'Mute'),
-            Button(voldown, 0, 0, 'voldown', 'Volume Down'),
-            Button(volup, 0, 0, 'volup', 'Volume Up'))
+        # button locations were worked out manually on paper
+        # PREV - REW - STOP - PLAY - PAUSE - FF - NEXT
+        # VOLDOWN - VOLBAR - VOLUP - MUTE(D)
+        # MENU - POWER
 
-    def get_user_text(self):
-        return
-        
+        row3_y = HEIGHT - BPAD - BSIZE
+        row2_y = HEIGHT - BPAD*2 - BSIZE*2
+        row1_y = HEIGHT - BPAD*3 - BSIZE*3
+
+        self.buttons.add(
+            Button(prev, 0, row1_y, 'prev', 'Previous'),
+            Button(rew, 0, row1_y, 'rew', 'Rewind'),
+            Button(stop, 0, row1_y, 'stop', 'Stop'),
+            Button(play, 0, row1_y, 'play', 'Play'),
+            Button(pause, 0, row1_y, 'pause', 'Pause'),
+            Button(ff, 0, row1_y, 'ff', 'Fast Forward'),
+            Button(next, 0, row1_y, 'next', 'Next'),
+
+            Button(voldown, 0, row2_y, 'voldown', 'Volume Down'),
+            Button(volup, 0, row2_y, 'volup', 'Volume Up')),
+            Button(mute, 0 , row2_y, 'mute', 'Mute Volume'),
+            Button(menu, 0, row3_y, 'menu', 'Menu'),
+            Button(power, 0, row3_y, 'power', 'Power Off'),
+
+            
+            
+
+            
+            
+            
+            
+            
+
     def event_handler(self, event):
         self.event = event
 
@@ -115,9 +131,8 @@ class Console:
 
         if self.setup_mode:
             self.setup()
-        
-        if self.show_setup_button:
-            self.setup_button.draw(self.win)
-        
-        if self.player_ok:
+        else:
             self.buttons.draw(self.win)
+            self.console()    
+        
+
