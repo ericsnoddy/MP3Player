@@ -1,7 +1,7 @@
 import pygame
 from math import sin
 
-from obj.settings import ACTIVE_BUTTONS, BSIZE
+from obj.settings import BUTTONS, BSIZE
 
 class Button(pygame.sprite.Sprite):
     def __init__(self, image, x, y, label, description):
@@ -32,48 +32,47 @@ class Button(pygame.sprite.Sprite):
         else:
             return False
 
-class MuteButton(Button):
+class ActiveButton(Button):
     def __init__(self, x, y, label, description):
         super().__init__(pygame.Surface((BSIZE, BSIZE)), x, y, label, description)
 
-        self.mute = pygame.image.load(ACTIVE_BUTTONS['mute'])
-        self.muted = pygame.image.load(ACTIVE_BUTTONS['muted'])
-        self.is_muted = False
+        self.inactive_img = pygame.image.load(BUTTONS[label]).convert_alpha()
+        self.active_img = pygame.image.load(BUTTONS[label + '_']).convert_alpha()
+        self.is_active = False
 
-        self.image = self.mute
-        self.rect = self.image.get_rect(topleft = (x,y))
+        self.image = self.inactive_img
+
+    def toggle_button(self):
+        if self.is_active:
+            self.is_active = False
+        else:
+            self.is_active = True
 
     def update(self):
-        if self.is_muted:
-            self.image = self.muted
+        if self.is_active:
+            self.image = self.active_img
             self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
         else:
-            self.image = self.mute
+            self.image = self.inactive_img
             self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
+        self.cooldown()
 
-class PauseButton(Button):
+class PauseButton(ActiveButton):
     def __init__(self, x, y, label, description):
-        super().__init__(pygame.Surface((BSIZE, BSIZE)), x, y, label, description)
+        super().__init__(x, y, label, description)
 
-        self.pause = pygame.image.load(ACTIVE_BUTTONS['pause'])
-        self.paused = pygame.image.load(ACTIVE_BUTTONS['paused'])
-        self.is_paused = False
-
-        self.image = self.pause
-        self.rect = self.image.get_rect(topleft = (x,y))
-
-        self.pulse_ms = 100
+        self.pulse_ms = 200
         self.pulse_start = None     # no need to init
         self.pulse_on = True
 
-    def toggle_pause(self):
-        if self.is_paused:
-            self.is_paused = False
+    def toggle_button(self):
+        if self.is_active:
+            self.is_active = False
             if not self.pulse_on:
                 self.pulse_on = True
                 self.image.set_alpha(255)            
         else:
-            self.is_paused = True
+            self.is_active = True
             self.pulse_start = pygame.time.get_ticks()            
 
     def pulse_alpha(self):
@@ -84,19 +83,76 @@ class PauseButton(Button):
 
         if delta % self.pulse_ms == 0:
             if self.pulse_on:
-                self.image.set_alpha(0)
+                self.image.set_alpha(255)
                 self.pulse_on = False
             else:
-                self.image.set_alpha(255)
+                self.image.set_alpha(0)
                 self.pulse_on = True
 
     def update(self):
-        if self.is_paused:
-            self.image = self.paused
+        if self.is_active:
+            self.image = self.active_img
             self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
             self.pulse_alpha()
         else:
-            self.image = self.pause
+            self.image = self.inactive_img
             self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
-
         self.cooldown()
+
+class PlayButton(ActiveButton):
+    def __init__(self, x, y, label, description):
+        super().__init__(x, y, label, description)
+
+        self.start_time = 0
+        self.stop_time = 0
+        self.play_offset = 0
+        self.duration = 0
+        self.song_in_progress = False
+
+    def get_clock(self):
+        tot_secs = (self.duration / 1000 )
+        hours = int((tot_secs / 3600) % 24)
+        mins = int((tot_secs / 60) % 60)
+        secs = int(tot_secs % 60)
+
+        return '{}:{:02.0f}:{:02.0f}'.format(hours, mins, secs)
+
+    def start_clock(self):
+        self.is_active = True
+        self.play_offset += pygame.time.get_ticks() - self.stop_time
+
+    def stop_clock(self):
+        self.is_active = False
+        self.stop_time = pygame.time.get_ticks()
+
+    def start_song(self):
+        self.is_active = True
+        self.song_in_progress = True
+        self.start_time = pygame.time.get_ticks()
+        
+    def stop_song(self):
+        self.is_active = False
+        self.song_in_progress = False
+        self.start_time = 0
+        self.play_offset = 0
+        self.duration = 0
+
+    def update(self):
+        if self.is_active:
+            self.image = self.active_img
+            self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
+            self.duration = pygame.time.get_ticks() - self.start_time - self.play_offset
+        else:
+            self.image = self.inactive_img
+            self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
+            
+        self.cooldown()
+
+class MuteButton(ActiveButton):
+    def __init__(self, x, y, label, description):
+        super().__init__(x, y, label, description)
+
+        self.saved_volume = pygame.mixer.music.get_volume()
+
+    def save_volume(self, volume):
+        self.saved_volume = volume

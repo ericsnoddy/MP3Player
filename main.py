@@ -13,7 +13,6 @@ def main():
     while True:
 
         # event loop
-        
         for event in pygame.event.get():
             if event.type == pygame.QUIT or not console.running:
                 pygame.mixer.quit()
@@ -21,7 +20,7 @@ def main():
                 sys.exit()
             
             console.event_handler(event)
-        
+
         console.run()
 
         pygame.display.update()

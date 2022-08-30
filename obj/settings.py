@@ -18,21 +18,27 @@ VOL_START = 0.7
 VOL_INCR = 0.01
 
 BUTTONS = {
-    'menu': join('assets', 'buttons', 'menu.png'),
+    # buttons
     'stop': join('assets', 'buttons', 'stop.png'),
-    'play': join('assets', 'buttons', 'play.png'),
-    'rew': join('assets', 'buttons', 'rew.png'),
-    'ff': join('assets', 'buttons', 'ff.png'),
     'prev': join('assets', 'buttons', 'prev.png'),
     'next': join('assets', 'buttons', 'next.png'),
     'power': join('assets', 'buttons', 'power.png'),
-    'voldown': join('assets', 'buttons', 'voldown.png'),
-    'volup': join('assets', 'buttons', 'volup.png')
-}
 
-ACTIVE_BUTTONS = {
+    # 'active' (invertible) buttons
+    'menu': join('assets', 'buttons', 'menu.png'),
+    'menu_': join('assets', 'buttons', 'menued.png'),
     'mute': join('assets', 'buttons', 'mute.png'),
-    'muted': join('assets', 'buttons', 'muted.png'),
+    'mute_': join('assets', 'buttons', 'muted.png'),
     'pause': join('assets', 'buttons', 'pause.png'),
-    'paused': join('assets', 'buttons', 'paused.png'),
+    'pause_': join('assets', 'buttons', 'paused.png'),
+    'play': join('assets', 'buttons', 'play.png'),
+    'play_': join('assets', 'buttons', 'playing.png'),
+    'rew': join('assets', 'buttons', 'rew.png'),
+    'rew_': join('assets', 'buttons', 'rewing.png'),
+    'ff': join('assets', 'buttons', 'ff.png'),
+    'ff_': join('assets', 'buttons', 'ffing.png'),
+    'voldown': join('assets', 'buttons', 'voldown.png'),
+    'voldown_': join('assets', 'buttons', 'voldowning.png'),
+    'volup': join('assets', 'buttons', 'volup.png'),    
+    'volup_': join('assets', 'buttons', 'voluping.png')
 }
