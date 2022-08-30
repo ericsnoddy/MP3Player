@@ -29,6 +29,7 @@ class Console:
         self.collection_type = None     # see build_collection() comments
         self.fadeout = False
         self.loop = False
+        self.song_in_progress = False
 
         # All the text that can be pre-rendered
         self.setup_txt = self.font_reg.render('Select music folder', True, FONT_COLOR)
@@ -157,26 +158,30 @@ class Console:
                     b.can_click = False
                     get_play_button = [button for button in self.buttons.sprites() if button.label == 'play']
 
-                    if b.is_active:
+                    if b.is_active:          
                         pygame.mixer.music.unpause()
+                        b.toggle_button()
                         for play in get_play_button:
-                            play.start_clock()
+                                play.start_clock()
                     else:
-                        pygame.mixer.music.pause()
-                        for play in get_play_button:
-                            play.stop_clock()
-
-                    b.toggle_button()           
+                        if self.song_in_progress:
+                            pygame.mixer.music.pause()
+                            b.toggle_button()
+                            for play in get_play_button:
+                                play.stop_clock()
+                        else:
+                            break                             
                     
                 if b.label == 'play' and b.can_click:
                     b.click_time = pygame.time.get_ticks()
                     b.can_click = False
 
         if self.event.type == MOUSEBUTTONUP:
-            get_vol_buttons = [button for button in self.buttons.sprites() if button.label[0:3] == 'vol']
-            for vol in get_vol_buttons:
-                if vol.is_active:
-                    vol.is_active = False
+            if pygame.mixer.music.get_busy():
+                get_vol_buttons = [button for button in self.buttons.sprites() if button.label[0:3] == 'vol']
+                for vol in get_vol_buttons:
+                    if vol.is_active:
+                        vol.is_active = False
 
     def get_random(self):
 
