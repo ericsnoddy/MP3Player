@@ -20,11 +20,13 @@ VOL_INCR = 0.01
 BUTTONS = {
     # buttons
     'stop': join('assets', 'buttons', 'stop.png'),
+    'stop_': join('assets', 'buttons', 'stopping.png'),
     'prev': join('assets', 'buttons', 'prev.png'),
+    'prev_': join('assets', 'buttons', 'preving.png'),
     'next': join('assets', 'buttons', 'next.png'),
+    'next_': join('assets', 'buttons', 'nexting.png'),
     'power': join('assets', 'buttons', 'power.png'),
-
-    # 'active' (invertible) buttons
+    'power_': join('assets', 'buttons', 'powering.png'),
     'menu': join('assets', 'buttons', 'menu.png'),
     'menu_': join('assets', 'buttons', 'menued.png'),
     'mute': join('assets', 'buttons', 'mute.png'),
