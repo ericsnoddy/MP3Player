@@ -20,8 +20,7 @@ def main():
                 sys.exit()
             
             console.event_handler(event)
-
-        console.run()
+        console.run()     
 
         pygame.display.update()
         clock.tick(FPS)

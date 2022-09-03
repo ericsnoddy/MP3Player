@@ -13,9 +13,9 @@ FONT_TYPE_REG = join('assets', 'fonts', 'Xolonium-Regular.otf')
 FONT_TYPE_BOLD = join('assets', 'fonts', 'Xolonium-Bold.otf')
 FONT_COLOR = '#FFD700'
 
-# VOL_START should be a multiple of VOL_INCR
+# volume and seek increment in seconds
 VOL_START = 0.7
-VOL_INCR = 0.01
+SEEK_INCR = 15
 
 BUTTONS = {
     # buttons

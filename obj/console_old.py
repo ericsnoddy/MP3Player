@@ -1,21 +1,17 @@
+import pygame
+from pygame.locals import *
+from tkinter import filedialog
 from os import walk
 from os.path import join
 from random import randrange
 
-import pygame
-from pygame.locals import *
-from tkinter import filedialog
-from mutagen.oggvorbis import OggVorbis
-
-from obj.settings import WIDTH, HEIGHT, PAD, BPAD, BSIZE, BG_DEFAULT, FONT_TYPE_REG,  FONT_TYPE_BOLD, FONT_COLOR, VOL_START, SEEK_INCR
-from obj.button import Button, QuickButton, VolumeButton, MuteButton
-from obj.debug import debug
+from obj.settings import WIDTH, HEIGHT, PAD, BPAD, BSIZE, BG_DEFAULT, FONT_TYPE_REG,  FONT_TYPE_BOLD, FONT_COLOR, VOL_START
+from obj.button import Button, VolumeButton, StopButton, MuteButton, PauseButton, SkipButton
 
 class Console:
     def __init__(self, win):
 
         self.debug = True
-        self.font_debug = pygame.font.Font(FONT_TYPE_REG, 6)
 
         self.running = True
         self.win = win
@@ -38,12 +34,10 @@ class Console:
         self.song_paths = []
 
         # Now playing
-        self.now_playing_index = 0
+        self.now_playing_index = None
         self.song_in_progress = False
         self.song_playing = False
-        self.skip_time = 0
-        self.song_length = 0
-        self.time_stamp = 0
+        self.duration = 0
         self.start_time = 0
         self.paused_time = 0
         self.off_time = 0
@@ -90,17 +84,17 @@ class Console:
         # add buttons to sprite group
         self.buttons.add(
             Button('power', (WIDTH - BSIZE) // 2, row3_y, 'Power Off'),
-            MuteButton('mute', WIDTH - rowpad - BSIZE, row2_y, 'Mute'),
-            QuickButton('stop', rowpad + 2*rowslot, row1_y, 'Stop'),
-            Button('play', rowpad + 3*rowslot, row1_y, 'Play'),
-            Button('pause', rowpad + 4*rowslot, row1_y, 'Pause'), 
-            QuickButton('prev', rowpad, row1_y, 'Previous'),
-            QuickButton('next', rowpad + 6*rowslot, row1_y, 'Next'),
             VolumeButton('voldown', rowpad + rowslot, row2_y, 'Volume Down'),
             VolumeButton('volup', WIDTH - rowpad - BSIZE - rowslot, row2_y, 'Volume Up'),
-            Button('rew', rowpad + rowslot, row1_y, 'Rewind'), 
-            Button('ff', rowpad + 5*rowslot, row1_y, 'Fast Forward'),
-            Button('menu', rowpad, row2_y, 'Menu'),       
+            MuteButton('mute', WIDTH - rowpad - BSIZE, row2_y, 'Mute'),
+            StopButton('stop', rowpad + 2*rowslot, row1_y, 'Stop'),
+            Button('play', rowpad + 3*rowslot, row1_y, 'Play'),
+            PauseButton('pause', rowpad + 4*rowslot, row1_y, 'Pause'), 
+            SkipButton('prev', rowpad, row1_y, 'Previous'),
+            SkipButton('next', rowpad + 6*rowslot, row1_y, 'Next'),
+            # Button('next', rowpad + rowslot, row1_y, 'Rewind'), 
+            # Button('ff', rowpad + 5*rowslot, row1_y, 'Fast Forward'),
+            # Button('menu', rowpad, row2_y, 'Menu'),                     
             
         )    
 
@@ -114,92 +108,82 @@ class Console:
 
                 if b.label == 'voldown':
                     b.volumize('-')
-                    self.activate(False, 'mute')
+                    self.toggle_butts(False, 'mute')
 
                 if b.label == 'volup':
                     b.volumize('+')
-                    self.activate(False, 'mute')
+                    self.toggle_butts(False, 'mute')
 
                 if b.label == 'mute' and b.can_click:
                     b.log_click()
                     b.toggle_mute()
 
-                if b.label == 'stop' and b.can_click and self.song_in_progress:
-                    b.log_click()
-                    b.activate()
-                    self.activate(False, 'play', 'pause')
+                if b.label == 'stop' and b.can_click and self.song_playing:
+                    b.log_click()                     
+                    b.stop_playback()
+                    self.toggle_butts(False, 'play', 'mute')
                     self.song_in_progress = False
                     self.song_playing = False
-                    self.reset_progress()
-                    pygame.mixer.music.stop()
+                    self.reset_duration()
+                    # if not song playing do nothing
 
-                if b.label == 'play' and b.can_click and not self.song_playing:
-                    b.log_click()
-                    b.activate()
-                    if self.song_in_progress:
-                        self.song_playing = True
-                        self.activate(False, 'pause')
+                if b.label == 'play' and b.can_click:
+                    b.log_click()                               
+                    if not self.song_in_progress:                        
+                        self.load_song('random')
+                        b.toggle_active()
+                        self.toggle_butts(False, 'stop')
+                        self.start_time = pygame.time.get_ticks()      
+                        self.song_in_progress = True
+                        self.song_playing = True            
+                    elif self.song_in_progress and not self.song_playing:                        
+                        self.toggle_butts(False, 'stop', 'pause')
+                        self.toggle_butts(True, 'play')
                         pygame.mixer.music.unpause()
+                        self.song_playing = True
                         self.off_time += pygame.time.get_ticks() - self.paused_time
                         self.paused_time = 0
-                    elif not self.song_in_progress:
-                        self.song_in_progress = True
-                        self.song_playing = True
-                        self.activate(False, 'stop')
-                        self.load_and_play()
-                        self.off_time = 0
-                        self.start_time = pygame.time.get_ticks()
+                    # if song in progress and playing do nothing
 
-                if b.label == 'prev' or b.label == 'next':
-                    if b.can_click:
-                        b.log_click()
-                        self.reset_progress()                   
-                        self.activate('play')
-                        self.activate(False, 'stop', 'pause')
-                        self.song_in_progress = True
-                        self.song_playing = True
-                        self.start_time = pygame.time.get_ticks()
-
-                        if b.label == 'prev' and self.now_playing_index > 0:
-                            self.load_and_play('prev')
-                        if b.label == 'next' and self.now_playing_index < len(self.collection) - 1:
-                            self.load_and_play('next')
-
-                if b.label == 'pause' and b.can_click and self.song_in_progress:
+                if b.label == 'pause' and b.can_click:
                     b.log_click()
                     if self.song_playing:
                         self.song_playing = False
-                        b.activate()
-                        self.activate(False, 'play')
                         self.paused_time = pygame.time.get_ticks()
-                        pygame.mixer.music.pause()
-                    else:
+                        self.toggle_butts(False, 'play')
+                        b.toggle_pause()
+                    elif not self.song_playing and self.song_in_progress:
                         self.song_playing = True
-                        b.activate(False)
-                        self.activate(True, 'play')
                         self.paused_time = 0
-                        pygame.mixer.music.unpause()
+                        self.toggle_butts(True, 'play')
+                        b.toggle_pause()
+                    # If not song in progress do nothing
 
-                if b.label == 'rew' or b.label == 'ff':
-                    if b.can_click and self.song_in_progress:
-                        if b.label == 'rew': 
-                            self.seek(-1)
-                        else: 
-                            self.seek(1)
+                if b.label == 'prev' or b.label == 'next' and b.can_click:
+                    b.log_click()
+                    b.toggle_active()
+                    self.reset_duration()
+                    if b.label == 'prev':
+                        self.load_song('prev')
+                    elif b.label == 'next':
+                        self.load_song('next')
                     
         if self.event.type == MOUSEBUTTONUP:
             get_vol_buttons = [button for button in self.buttons.sprites() if button.label[0:3] == 'vol']
             for vol in get_vol_buttons:
-                vol.volup_active = False
-                vol.voldown_active = False
+                if vol.is_active:
+                    vol.is_active = False
+                    vol.volup_active = False
+                    vol.voldown_active = False
 
-    def activate(self, activate, *butt_labels):
+    def toggle_butts(self, activate = False, *butt_labels):
 
         butts = [
             [b for b in self.buttons.sprites() if b.label == 'stop'][0],
             [b for b in self.buttons.sprites() if b.label == 'play'][0],
             [b for b in self.buttons.sprites() if b.label == 'pause'][0],
-            [b for b in self.buttons.sprites() if b.label == 'mute'][0]]
+            [b for b in self.buttons.sprites() if b.label == 'mute'][0]
+        ]
 
         for butt in butts:
             if butt.label in butt_labels:
@@ -208,41 +192,42 @@ class Console:
                 else:
                     butt.is_active = False
 
-    def load_and_play(self, selection = 'random'):   
+    def load_song(self, selection = 'random'):   
         if selection == 'random':
-            self.now_playing_index = randrange(0, len(self.song_paths))            
-        if selection == 'prev':
-            self.now_playing_index -= 1
-        if selection == 'next':
-            self.now_playing_index += 1
+            i = randrange(0, len(self.song_paths))
+            self.now_playing_index = i     
+            pygame.mixer.music.load(self.song_paths[i])
+            pygame.mixer.music.play()        
 
-        song = OggVorbis(self.song_paths[self.now_playing_index])
-        self.song_length = song.info.length
-        pygame.mixer.music.load(self.song_paths[self.now_playing_index])
-        pygame.mixer.music.play()   
+        elif selection == 'prev':
+            if self.now_playing_index > 0:
+                self.now_playing_index -= 1
+                pygame.mixer.music.load(self.song_paths[self.now_playing_index])   
+                pygame.mixer.music.play()        
 
-    def seek(self, direction):
-        # -1 rew, 1 ff
-        total_secs = self.time_stamp // 1000
-        new_pos = total_secs + direction * 15
-        if new_pos >= 0 and new_pos < self.song_length:
-            self.skip_time += direction * 15
-            pygame.mixer.music.set_pos(new_pos)    
+        elif selection == 'next':
+            if self.now_playing_index < len(self.song_paths) - 1:
+                self.now_playing_index += 1
+                pygame.mixer.music.load(self.song_paths[self.now_playing_index])
+                pygame.mixer.music.play()
 
     def get_duration(self):
-        tot_secs = (self.time_stamp / 1000 )
+        tot_secs = (self.duration / 1000 )
         hours = int((tot_secs / 3600) % 24)
         mins = int((tot_secs / 60) % 60)
         secs = int(tot_secs % 60)
 
         return '{}:{:02.0f}:{:02.0f}'.format(hours, mins, secs)
 
-    def reset_progress(self):
-        self.time_stamp = 0
+    def reset_duration(self):
+        self.duration = 0
         self.start_time = 0
         self.paused_time = 0
         self.off_time = 0
-        self.skip_time = 0
+
+    def event_handler(self, event):
+        self.event = event
+        self.click_handler()
 
     def say_goodbye(self):
 
@@ -252,14 +237,8 @@ class Console:
                 (HEIGHT - self.goodbye_txt.get_height()) // 2))
 
         pygame.display.update()
-        if self.song_playing:
-            pygame.mixer.music.fadeout(3000)
-        pygame.time.delay(3000)        
+        pygame.time.delay(3000)
         self.running = False
-
-    def event_handler(self, event):
-        self.event = event
-        self.click_handler()
 
     def run(self):
         self.win.blit(self.bg, (0,0))
@@ -268,20 +247,13 @@ class Console:
             self.buttons.update()
             self.buttons.draw(self.win)
 
-            # duration display
             now = pygame.time.get_ticks()
             if self.song_in_progress:
-                self.time_stamp = now - self.start_time - self.off_time + (self.skip_time * 1000)
-            elif not self.song_playing:
-                self.off_time = pygame.time.get_ticks() - self.paused_time
+                self.duration = now - self.start_time - self.off_time
 
             duration = self.font_goodbye.render(self.get_duration(), True, FONT_COLOR)
-            
+            if self.song_in_progress and not self.song_playing:
+                self.off_time = pygame.time.get_ticks() - self.paused_time     
             self.win.blit(duration, ((WIDTH - PAD*2 - duration.get_width()) // 2 + PAD, PAD))
         else:    
             self.setup()
-
-        if self.debug:
-            if self.collection:
-                debug(['timestamp {}, start {}, off {}, skip {}'.format(self.time_stamp, self.start_time, self.off_time, self.skip_time)])
-            
