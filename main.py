@@ -1,4 +1,5 @@
-import pygame, sys
+import pygame as pg
+import sys
 from pygame.locals import *
 
 from obj.settings import WIDTH, HEIGHT, FPS, CAPTION
@@ -13,26 +14,25 @@ def main():
     while True:
 
         # event loop
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT or not console.running:
-                pygame.mixer.quit()
-                pygame.quit()
+        for event in pg.event.get():
+            if event.type == pg.QUIT or not console.running:
+                pg.mixer.quit()
+                pg.quit()
                 sys.exit()
             
             console.event_handler(event)
-        console.run()     
-
-        pygame.display.update()
+        console.run()
+        pg.display.update()
         clock.tick(FPS)
 
 def init_pygame():
     
-    # initialize all pygame modules
-    pygame.init()
+    # initialize all pg modules
+    pg.init()
 
-    WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption(CAPTION)
-    clock = pygame.time.Clock()
+    WIN = pg.display.set_mode((WIDTH, HEIGHT))
+    pg.display.set_caption(CAPTION)
+    clock = pg.time.Clock()
 
     return WIN, clock
 

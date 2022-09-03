@@ -2,7 +2,7 @@ from os import walk
 from os.path import join
 from random import randrange
 
-import pygame as pg
+import pygame
 from pygame.locals import *
 from tkinter import filedialog
 from mutagen.oggvorbis import OggVorbis
@@ -15,20 +15,20 @@ class Console:
     def __init__(self, win):
 
         self.debug = True
-        self.font_debug = pg.font.Font(FONT_TYPE_REG, 6)
+        self.font_debug = pygame.font.Font(FONT_TYPE_REG, 6)
 
         self.running = True
         self.win = win
 
         # audio
-        pg.mixer.init()
-        pg.mixer.music.set_volume(VOL_START)
+        pygame.mixer.init()
+        pygame.mixer.music.set_volume(VOL_START)
 
-        self.bg = pg.image.load(BG_DEFAULT).convert()
-        self.font_reg = pg.font.Font(FONT_TYPE_REG, 14)
-        self.font_goodbye = pg.font.Font(FONT_TYPE_BOLD, 50)
-        self.font_list = pg.font.Font(FONT_TYPE_REG, 8)
-        self.font_list_bold = pg.font.Font(FONT_TYPE_BOLD, 10)
+        self.bg = pygame.image.load(BG_DEFAULT).convert()
+        self.font_reg = pygame.font.Font(FONT_TYPE_REG, 14)
+        self.font_goodbye = pygame.font.Font(FONT_TYPE_BOLD, 50)
+        self.font_list = pygame.font.Font(FONT_TYPE_REG, 8)
+        self.font_list_bold = pygame.font.Font(FONT_TYPE_BOLD, 10)
 
         # default flags and user setup
         self.setup_mode = True
@@ -41,17 +41,20 @@ class Console:
         self.now_playing_index = 0
         self.song_in_progress = False
         self.song_playing = False
+        self.skip_time = 0
         self.song_length = 0
-        self.skip_time = 0        
         self.time_stamp = 0
+        self.start_time = 0
+        self.paused_time = 0
+        self.off_time = 0
 
         # All the text that can be pre-rendered
         self.setup_txt = self.font_reg.render('Select music folder', True, FONT_COLOR)
         self.goodbye_txt = self.font_goodbye.render('Ciao!', True, FONT_COLOR)
 
         # buttons (requires self.setup_txt)
-        self.buttons = pg.sprite.Group()
-        self.setup_button = pg.sprite.GroupSingle()
+        self.buttons = pygame.sprite.Group()
+        self.setup_button = pygame.sprite.GroupSingle()
         self.group_buttons()
 
     def setup(self):
@@ -127,7 +130,8 @@ class Console:
                     self.activate(False, 'play', 'pause')
                     self.song_in_progress = False
                     self.song_playing = False
-                    pg.mixer.music.stop()
+                    self.reset_progress()
+                    pygame.mixer.music.stop()
 
                 if b.label == 'play' and b.can_click and not self.song_playing:
                     b.log_click()
@@ -135,20 +139,26 @@ class Console:
                     if self.song_in_progress:
                         self.song_playing = True
                         self.activate(False, 'pause')
-                        pg.mixer.music.unpause()
+                        pygame.mixer.music.unpause()
+                        self.off_time += pygame.time.get_ticks() - self.paused_time
+                        self.paused_time = 0
                     elif not self.song_in_progress:
                         self.song_in_progress = True
                         self.song_playing = True
                         self.activate(False, 'stop')
                         self.load_and_play()
+                        self.off_time = 0
+                        self.start_time = pygame.time.get_ticks()
 
                 if b.label == 'prev' or b.label == 'next':
                     if b.can_click:
-                        b.log_click()          
+                        b.log_click()
+                        self.reset_progress()                   
                         self.activate('play')
                         self.activate(False, 'stop', 'pause')
                         self.song_in_progress = True
                         self.song_playing = True
+                        self.start_time = pygame.time.get_ticks()
 
                         if b.label == 'prev' and self.now_playing_index > 0:
                             self.load_and_play('prev')
@@ -161,12 +171,14 @@ class Console:
                         self.song_playing = False
                         b.activate()
                         self.activate(False, 'play')
-                        pg.mixer.music.pause()
+                        self.paused_time = pygame.time.get_ticks()
+                        pygame.mixer.music.pause()
                     else:
                         self.song_playing = True
                         b.activate(False)
                         self.activate(True, 'play')
-                        pg.mixer.music.unpause()
+                        self.paused_time = 0
+                        pygame.mixer.music.unpause()
 
                 if b.label == 'rew' or b.label == 'ff':
                     if b.can_click and self.song_in_progress:
@@ -206,8 +218,8 @@ class Console:
 
         song = OggVorbis(self.song_paths[self.now_playing_index])
         self.song_length = song.info.length
-        pg.mixer.music.load(self.song_paths[self.now_playing_index])
-        pg.mixer.music.play()   
+        pygame.mixer.music.load(self.song_paths[self.now_playing_index])
+        pygame.mixer.music.play()   
 
     def seek(self, direction):
         # -1 rew, 1 ff
@@ -215,7 +227,7 @@ class Console:
         new_pos = total_secs + direction * 15
         if new_pos >= 0 and new_pos < self.song_length:
             self.skip_time += direction * 15
-            pg.mixer.music.set_pos(new_pos)    
+            pygame.mixer.music.set_pos(new_pos)    
 
     def format_duration(self, duration):
         tot_secs = (duration / 1000 )
@@ -239,10 +251,10 @@ class Console:
                 ((WIDTH - self.goodbye_txt.get_width()) // 2, 
                 (HEIGHT - self.goodbye_txt.get_height()) // 2))
 
-        pg.display.update()
+        pygame.display.update()
         if self.song_playing:
-            pg.mixer.music.fadeout(3000)
-        pg.time.delay(3000)        
+            pygame.mixer.music.fadeout(3000)
+        pygame.time.delay(3000)        
         self.running = False
 
     def event_handler(self, event):
@@ -257,7 +269,10 @@ class Console:
             self.buttons.draw(self.win)
 
             #duration display            
-            duration = pg.mixer.music.get_pos() + self.skip_time
+            if self.song_in_progress:
+                self.time_stamp = pygame.time.get_ticks() - self.off_time - self.start_time  + (self.skip_time * 1000)                 
+                if not self.song_playing:
+                    self.off_time = pygame.time.get_ticks() - self.paused_time
 
             duration = self.font_goodbye.render(self.format_duration(self.time_stamp), True, FONT_COLOR)
             self.win.blit(duration, ((WIDTH - PAD*2 - duration.get_width()) // 2 + PAD, PAD))
@@ -266,5 +281,14 @@ class Console:
 
         if self.debug:
             if self.collection:
-                
-                pass
+                now = pygame.time.get_ticks()
+                ts = self.time_stamp
+                st = self.start_time
+                ot = self.off_time
+                pt = self.paused_time
+                skt = self.skip_time
+
+                debug(['{} = {} - {} - {} + {}'.format(ts, now, ot, st, skt),
+                        '{} = {} - {}'.format(ot, now, pt)
+                        ])
+            
