@@ -4,7 +4,7 @@ from math import sin
 from obj.settings import BUTTONS
 
 class Button(pg.sprite.Sprite):
-    def __init__(self, label, x, y, description):
+    def __init__(self, label, x, y):
         super().__init__()
 
         self.image = self.inactive_image = pg.image.load(BUTTONS[label]).convert_alpha()
@@ -12,7 +12,6 @@ class Button(pg.sprite.Sprite):
         self.rect = self.image.get_rect(topleft = (x,y))
         self.radius = self.rect.width // 2
         self.label = label
-        self.description = description
         self.click_time = None
         self.click_cooldown = 400
         self.can_click = True
@@ -50,8 +49,8 @@ class Button(pg.sprite.Sprite):
         self.cooldown()
 
 class QuickButton(Button):
-    def __init__(self, label, x, y, description):
-        super().__init__(label, x, y, description)
+    def __init__(self, label, x, y):
+        super().__init__(label, x, y)
 
     def update(self):
         if not self.can_click:
@@ -65,24 +64,24 @@ class QuickButton(Button):
         self.cooldown()
 
 class MuteButton(Button):
-    def __init__(self, label, x, y, description):
-        super().__init__(label, x, y, description)
+    def __init__(self, label, x, y):
+        super().__init__(label, x, y)
 
         self.saved_volume = pg.mixer.music.get_volume()
 
     def toggle_mute(self):
         current_volume = pg.mixer.music.get_volume()
-        if current_volume > 0:
+        if self.is_active:
+            pg.mixer.music.set_volume(self.saved_volume)
+            self.is_active = False
+        else:
             self.saved_volume = current_volume
             pg.mixer.music.set_volume(0)
             self.is_active = True
-        elif current_volume == 0 and self.saved_volume > 0:
-            pg.mixer.music.set_volume(self.saved_volume)
-            self.is_active = False
 
 class VolumeButton(Button):
-    def __init__(self, label, x, y, description):
-        super().__init__(label, x, y, description)
+    def __init__(self, label, x, y):
+        super().__init__(label, x, y)
 
         self.volup_active = False
         self.voldown_active = False

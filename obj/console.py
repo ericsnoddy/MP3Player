@@ -1,7 +1,6 @@
 from os import walk
 from os.path import join
 from random import randrange
-import sys
 
 import pygame as pg
 from pygame.locals import *
@@ -42,8 +41,7 @@ class Console:
         self.now_playing_index = 0
         self.song_in_progress = False
         self.song_playing = False
-        self.start_pos = 0
-        print(type(self.start_pos))
+        self.song_pos = 0
         self.song_length = 0
         self.skip_time = 0        
         self.time_stamp = 0
@@ -78,7 +76,7 @@ class Console:
         # add setup icon to GroupSingle sprite group
         centeringx = (WIDTH - PAD*2 - BSIZE) // 2 + PAD
         centeringy = PAD + self.setup_txt.get_height() + PAD
-        self.setup_button.add(Button('menu', centeringx, centeringy, 'load folder'))
+        self.setup_button.add(Button('menu', centeringx, centeringy))
 
         # Spacing for icons (sprites)
         rowpad = (WIDTH - BSIZE*7 - BPAD*6) // 2
@@ -89,18 +87,18 @@ class Console:
 
         # add buttons to sprite group
         self.buttons.add(
-            Button('power', (WIDTH - BSIZE) // 2, row3_y, 'Power Off'),
-            MuteButton('mute', WIDTH - rowpad - BSIZE, row2_y, 'Mute'),
-            QuickButton('stop', rowpad + 2*rowslot, row1_y, 'Stop'),
-            Button('play', rowpad + 3*rowslot, row1_y, 'Play'),
-            Button('pause', rowpad + 4*rowslot, row1_y, 'Pause'), 
-            QuickButton('prev', rowpad, row1_y, 'Previous'),
-            QuickButton('next', rowpad + 6*rowslot, row1_y, 'Next'),
-            VolumeButton('voldown', rowpad + rowslot, row2_y, 'Volume Down'),
-            VolumeButton('volup', WIDTH - rowpad - BSIZE - rowslot, row2_y, 'Volume Up'),
-            QuickButton('rew', rowpad + rowslot, row1_y, 'Rewind'), 
-            QuickButton('ff', rowpad + 5*rowslot, row1_y, 'Fast Forward'),
-            Button('menu', rowpad, row2_y, 'Menu'),            
+            Button('power', (WIDTH - BSIZE) // 2, row3_y),
+            MuteButton('mute', WIDTH - rowpad - BSIZE, row2_y),
+            QuickButton('stop', rowpad + 2*rowslot, row1_y),
+            Button('play', rowpad + 3*rowslot, row1_y),
+            Button('pause', rowpad + 4*rowslot, row1_y), 
+            QuickButton('prev', rowpad, row1_y),
+            QuickButton('next', rowpad + 6*rowslot, row1_y),
+            VolumeButton('voldown', rowpad + rowslot, row2_y),
+            VolumeButton('volup', WIDTH - rowpad - BSIZE - rowslot, row2_y),
+            QuickButton('rew', rowpad + rowslot, row1_y), 
+            QuickButton('ff', rowpad + 5*rowslot, row1_y),
+            Button('menu', rowpad, row2_y),            
         )    
 
     def click_handler(self):
@@ -126,11 +124,11 @@ class Console:
                 if b.label == 'stop' and b.can_click and self.song_in_progress:
                     b.log_click()
                     b.activate()
-                    self.activate(False, 'play', 'pause')
+                    self.activate(False, 'play', 'pause', 'mute')
                     self.song_in_progress = False
                     self.song_playing = False
                     pg.mixer.music.stop()
-                    self.start_pos = 0
+                    self.song_pos = 0
 
                 if b.label == 'play' and b.can_click and not self.song_playing:
                     b.log_click()
@@ -153,7 +151,7 @@ class Console:
                         self.activate(False, 'stop', 'pause')
                         self.song_in_progress = True
                         self.song_playing = True
-                        self.start_pos = 0
+                        self.song_pos = 0
 
                         if b.label == 'prev' and self.now_playing_index > 0:
                             self.load_song('prev')
@@ -179,16 +177,16 @@ class Console:
                     if b.can_click and self.song_in_progress:
                         b.log_click()
                         if b.label == 'rew':
-                            self.start_pos = self.seek_position(self.start_pos, rewind = 10)
-                            pg.mixer.music.play(0, self.start_pos)
+                            self.song_pos = self.seek_position(self.song_pos, rewind = 10)
+                            pg.mixer.music.play(0, self.song_pos)
                         else:
-                            position = self.seek_position(self.start_pos, forward = 10)
+                            position = self.seek_position(self.song_pos, forward = 10)
                             try:
                                 pg.mixer.music.play(0, position)
                             except:
                                 pass
                             else:
-                                self.start_pos = position                   
+                                self.song_pos = position                   
                     
         if self.event.type == MOUSEBUTTONUP:
             get_vol_buttons = [button for button in self.buttons.sprites() if button.label[0:3] == 'vol']
@@ -210,6 +208,10 @@ class Console:
                     butt.is_active = True
                 else:
                     butt.is_active = False
+
+                    # janky solution to returning saved volume if song is played-muted-stopped-played 
+                    if butt.label == 'mute':
+                        pg.mixer.music.set_volume(butt.saved_volume)
 
     def load_song(self, selection = 'random'):   
         if selection == 'random':
@@ -236,7 +238,7 @@ class Console:
     #         pg.mixer.music.play(0, new_pos)    
 
     def display_duration(self):
-        position = round(self.seek_position(self.start_pos), 2)
+        position = round(self.seek_position(self.song_pos), 2)
         hours = "{:0>2d}".format(int(position // 3600))
         mins = "{:0>2d}".format(int(position // 60))
         secs = "{:0>2d}".format(int(position % 60))
