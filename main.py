@@ -16,7 +16,6 @@ def main():
         # event loop
         for event in pg.event.get():
             if event.type == pg.QUIT or not console.running:
-                pg.mixer.quit()
                 pg.quit()
                 sys.exit()
             
@@ -30,7 +29,6 @@ def init_pygame():
     
     # initialize all pg modules
     pg.init()
-    pg.mixer.init()
 
     WIN = pg.display.set_mode((WIDTH, HEIGHT))
     pg.display.set_caption(CAPTION)
