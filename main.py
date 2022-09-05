@@ -29,6 +29,7 @@ def init_pygame():
     
     # initialize all pg modules
     pg.init()
+    pg.mixer.init()
 
     WIN = pg.display.set_mode((WIDTH, HEIGHT))
     pg.display.set_caption(CAPTION)

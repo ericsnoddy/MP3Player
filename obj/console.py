@@ -1,13 +1,14 @@
 from os import walk
 from os.path import join
 from random import randrange
+import sys
 
 import pygame as pg
 from pygame.locals import *
 from tkinter import filedialog
 from mutagen.oggvorbis import OggVorbis
 
-from obj.settings import WIDTH, HEIGHT, PAD, BPAD, BSIZE, BG_DEFAULT, FONT_TYPE_REG,  FONT_TYPE_BOLD, FONT_COLOR, VOL_START, SEEK_INCR
+from obj.settings import WIDTH, HEIGHT, PAD, BPAD, BSIZE, BG_DEFAULT, FONT_TYPE_REG, FONT_TYPE_BOLD, FONT_COLOR, VOL_START
 from obj.button import Button, QuickButton, VolumeButton, MuteButton
 from obj.debug import debug
 
@@ -41,6 +42,8 @@ class Console:
         self.now_playing_index = 0
         self.song_in_progress = False
         self.song_playing = False
+        self.start_pos = 0
+        print(type(self.start_pos))
         self.song_length = 0
         self.skip_time = 0        
         self.time_stamp = 0
@@ -95,10 +98,9 @@ class Console:
             QuickButton('next', rowpad + 6*rowslot, row1_y, 'Next'),
             VolumeButton('voldown', rowpad + rowslot, row2_y, 'Volume Down'),
             VolumeButton('volup', WIDTH - rowpad - BSIZE - rowslot, row2_y, 'Volume Up'),
-            Button('rew', rowpad + rowslot, row1_y, 'Rewind'), 
-            Button('ff', rowpad + 5*rowslot, row1_y, 'Fast Forward'),
-            Button('menu', rowpad, row2_y, 'Menu'),       
-            
+            QuickButton('rew', rowpad + rowslot, row1_y, 'Rewind'), 
+            QuickButton('ff', rowpad + 5*rowslot, row1_y, 'Fast Forward'),
+            Button('menu', rowpad, row2_y, 'Menu'),            
         )    
 
     def click_handler(self):
@@ -128,6 +130,7 @@ class Console:
                     self.song_in_progress = False
                     self.song_playing = False
                     pg.mixer.music.stop()
+                    self.start_pos = 0
 
                 if b.label == 'play' and b.can_click and not self.song_playing:
                     b.log_click()
@@ -140,7 +143,8 @@ class Console:
                         self.song_in_progress = True
                         self.song_playing = True
                         self.activate(False, 'stop')
-                        self.load_and_play()
+                        self.load_song()
+                        pg.mixer.music.play()
 
                 if b.label == 'prev' or b.label == 'next':
                     if b.can_click:
@@ -149,11 +153,14 @@ class Console:
                         self.activate(False, 'stop', 'pause')
                         self.song_in_progress = True
                         self.song_playing = True
+                        self.start_pos = 0
 
                         if b.label == 'prev' and self.now_playing_index > 0:
-                            self.load_and_play('prev')
+                            self.load_song('prev')
+                            pg.mixer.music.play()
                         if b.label == 'next' and self.now_playing_index < len(self.collection) - 1:
-                            self.load_and_play('next')
+                            self.load_song('next')
+                            pg.mixer.music.play()
 
                 if b.label == 'pause' and b.can_click and self.song_in_progress:
                     b.log_click()
@@ -170,10 +177,18 @@ class Console:
 
                 if b.label == 'rew' or b.label == 'ff':
                     if b.can_click and self.song_in_progress:
-                        if b.label == 'rew': 
-                            self.seek(-1)
-                        else: 
-                            self.seek(1)
+                        b.log_click()
+                        if b.label == 'rew':
+                            self.start_pos = self.seek_position(self.start_pos, rewind = 10)
+                            pg.mixer.music.play(0, self.start_pos)
+                        else:
+                            position = self.seek_position(self.start_pos, forward = 10)
+                            try:
+                                pg.mixer.music.play(0, position)
+                            except:
+                                pass
+                            else:
+                                self.start_pos = position                   
                     
         if self.event.type == MOUSEBUTTONUP:
             get_vol_buttons = [button for button in self.buttons.sprites() if button.label[0:3] == 'vol']
@@ -196,7 +211,7 @@ class Console:
                 else:
                     butt.is_active = False
 
-    def load_and_play(self, selection = 'random'):   
+    def load_song(self, selection = 'random'):   
         if selection == 'random':
             self.now_playing_index = randrange(0, len(self.song_paths))            
         if selection == 'prev':
@@ -206,31 +221,29 @@ class Console:
 
         song = OggVorbis(self.song_paths[self.now_playing_index])
         self.song_length = song.info.length
-        pg.mixer.music.load(self.song_paths[self.now_playing_index])
-        pg.mixer.music.play()   
+        pg.mixer.music.load(self.song_paths[self.now_playing_index])           
 
-    def seek(self, direction):
-        # -1 rew, 1 ff
-        total_secs = self.time_stamp // 1000
-        new_pos = total_secs + direction * 15
-        if new_pos >= 0 and new_pos < self.song_length:
-            self.skip_time += direction * 15
-            pg.mixer.music.set_pos(new_pos)    
+    def seek_position(self, start_pos, rewind=0, forward=0):
+        position = pg.mixer.music.get_pos() / 1000 + start_pos - rewind + forward
+        return position if position >= 0 else 0
 
-    def format_duration(self, duration):
-        tot_secs = (duration / 1000 )
-        hours = int((tot_secs / 3600) % 24)
-        mins = int((tot_secs / 60) % 60)
-        secs = int(tot_secs % 60)
+    # def seek(self, direction):
+    #     # -1 rew, 1 ff
+    #     position = pg.mixer.music.get_pos() / 1000 + start_pos - rewind + forward
+    #     new_pos = total_secs + direction * 15
+    #     if new_pos >= 0 and new_pos < self.song_length:
+    #         self.skip_time += direction * 15
+    #         pg.mixer.music.play(0, new_pos)    
 
-        return '{}:{:02.0f}:{:02.0f}'.format(hours, mins, secs)
+    def display_duration(self):
+        position = round(self.seek_position(self.start_pos), 2)
+        hours = "{:0>2d}".format(int(position // 3600))
+        mins = "{:0>2d}".format(int(position // 60))
+        secs = "{:0>2d}".format(int(position % 60))
+        tenths = int(10 * (position % 60 - int(position % 60)))
 
-    def reset_progress(self):
-        self.time_stamp = 0
-        self.start_time = 0
-        self.paused_time = 0
-        self.off_time = 0
-        self.skip_time = 0
+        time_played_text = self.font_goodbye.render(f'{hours}:{mins}:{secs}.{tenths}', True, FONT_COLOR)
+        self.win.blit(time_played_text, ((WIDTH - PAD*2 - time_played_text.get_width()) // 2 + PAD, PAD))
 
     def say_goodbye(self):
 
@@ -257,14 +270,10 @@ class Console:
             self.buttons.draw(self.win)
 
             #duration display            
-            duration = pg.mixer.music.get_pos() + self.skip_time
-
-            duration = self.font_goodbye.render(self.format_duration(self.time_stamp), True, FONT_COLOR)
-            self.win.blit(duration, ((WIDTH - PAD*2 - duration.get_width()) // 2 + PAD, PAD))
+            self.display_duration()            
         else:    
             self.setup()
 
         if self.debug:
-            if self.collection:
-                
+            if self.collection:                
                 pass
