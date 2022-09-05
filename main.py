@@ -22,6 +22,7 @@ def main():
             
             console.event_handler(event)
         console.run()
+        
         pg.display.update()
         clock.tick(FPS)
 
