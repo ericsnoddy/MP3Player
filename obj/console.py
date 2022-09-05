@@ -1,6 +1,7 @@
 from os import walk
 from os.path import join
 from random import randrange
+from socket import SO_LINGER
 
 import pygame as pg
 from pygame.locals import *
@@ -40,10 +41,13 @@ class Console:
         self.now_playing_index = 0
         self.song_in_progress = False
         self.song_playing = False
-        self.song_pos = 0
+        self.song_pos_offset = 0
         self.song_length = 0
         self.skip_time = 0        
         self.time_stamp = 0
+
+        # for setting event for end of song
+        self.SONG_OVER = pg.USEREVENT+1
 
         # All the text that can be pre-rendered
         self.setup_txt = self.font_reg.render('Select music folder', True, FONT_COLOR)
@@ -101,6 +105,20 @@ class Console:
         )    
 
     def click_handler(self):
+        if self.event.type == self.SONG_OVER:
+            # loop mode, random mode, or once mode
+            try:
+                self.load_song('next')
+            except: # stop the player
+                self.song_in_progress = False
+                self.song_playing = False
+                self.activate(False, 'mute', 'play')
+                self.activate(True, 'stop')
+                self.song_pos_offset = 0
+            else:
+                pg.mixer.music.play()
+                self.song_pos_offset = 0
+
         if self.event.type == MOUSEBUTTONDOWN:
             clicked = [button for button in self.buttons.sprites() if button.is_clicked(self.event.pos)]
            
@@ -127,7 +145,7 @@ class Console:
                     self.song_in_progress = False
                     self.song_playing = False
                     pg.mixer.music.stop()
-                    self.song_pos = 0
+                    self.song_pos_offset = 0
 
                 if b.label == 'play' and b.can_click and not self.song_playing:
                     b.log_click()
@@ -150,7 +168,7 @@ class Console:
                         self.activate(False, 'stop', 'pause')
                         self.song_in_progress = True
                         self.song_playing = True
-                        self.song_pos = 0
+                        self.song_pos_offset = 0
 
                         if b.label == 'prev' and self.now_playing_index > 0:
                             self.load_song('prev')
@@ -176,17 +194,11 @@ class Console:
                     if b.can_click and self.song_in_progress:
                         b.log_click()
                         if b.label == 'rew':
-                            self.song_pos = self.seek_position(self.song_pos, rewind = 10)
-                            pg.mixer.music.play(0, self.song_pos)
+                            self.song_pos_offset = self.seek_position(self.song_pos_offset, rewind = 10)
                         else:
-                            position = self.seek_position(self.song_pos, forward = 10)
-                            try:
-                                pg.mixer.music.play(0, position)
-                            except:
-                                pass
-                            else:
-                                self.song_pos = position                   
-                    
+                            self.song_pos_offset = self.seek_position(self.song_pos_offset, forward = 10)
+                        pg.mixer.music.play(0, self.song_pos_offset)                    
+
         if self.event.type == MOUSEBUTTONUP:
             get_vol_buttons = [button for button in self.buttons.sprites() if button.label[0:3] == 'vol']
             for vol in get_vol_buttons:
@@ -208,7 +220,7 @@ class Console:
                 else:
                     butt.is_active = False
 
-                    # janky solution to returning saved volume if song is played-muted-stopped-played 
+                    # janky solution to reverting back to saved volume if song is played-muted-stopped-played 
                     if butt.label == 'mute':
                         pg.mixer.music.set_volume(butt.saved_volume)
 
@@ -222,22 +234,25 @@ class Console:
 
         song = OggVorbis(self.song_paths[self.now_playing_index])
         self.song_length = song.info.length
-        pg.mixer.music.load(self.song_paths[self.now_playing_index])           
 
-    def seek_position(self, start_pos, rewind=0, forward=0):
+        # custom end event to alert when song is over
+        pg.mixer.music.set_endevent(self.SONG_OVER)
+        pg.mixer.music.load(self.song_paths[self.now_playing_index])          
+
+    def seek_position(self, start_pos, rewind = 0, forward = 0):
         position = pg.mixer.music.get_pos() / 1000 + start_pos - rewind + forward
-        return position if position >= 0 else 0
-
-    # def seek(self, direction):
-    #     # -1 rew, 1 ff
-    #     position = pg.mixer.music.get_pos() / 1000 + start_pos - rewind + forward
-    #     new_pos = total_secs + direction * 15
-    #     if new_pos >= 0 and new_pos < self.song_length:
-    #         self.skip_time += direction * 15
-    #         pg.mixer.music.play(0, new_pos)    
+        if position < 0:
+            return 0
+        elif position > self.song_length:
+            return self.song_length - 1
+        else:
+            return position
 
     def display_duration(self):
-        position = round(self.seek_position(self.song_pos), 2)
+        if not self.song_in_progress:
+            position = self.song_length
+        else:
+            position = round(self.seek_position(self.song_pos_offset), 2)
         hours = "{:0>2d}".format(int(position // 3600))
         mins = "{:0>2d}".format(int(position // 60))
         secs = "{:0>2d}".format(int(position % 60))
@@ -245,6 +260,9 @@ class Console:
 
         time_played_text = self.font_goodbye.render(f'{hours}:{mins}:{secs}.{tenths}', True, FONT_COLOR)
         self.win.blit(time_played_text, ((WIDTH - PAD*2 - time_played_text.get_width()) // 2 + PAD, PAD))
+
+        if self.debug:
+            debug([f'{int(self.song_pos_offset)} - {position} / {int(self.song_length)}'])
 
     def say_goodbye(self):
 
@@ -269,12 +287,8 @@ class Console:
         if not self.setup_mode:
             self.buttons.update()
             self.buttons.draw(self.win)
-
-            #duration display            
-            self.display_duration()            
+            self.display_duration()                   
         else:    
             self.setup()
 
-        if self.debug:
-            if self.collection:                
-                pass
+        
