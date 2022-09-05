@@ -32,7 +32,6 @@ class Console:
 
         # default flags and user setup
         self.setup_mode = True
-        self.show_setup_button = True
         self.music_folder = None
         self.collection = []
         self.song_paths = []
