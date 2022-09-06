@@ -12,10 +12,15 @@ CAPTION = 'Music Player'
 FONT_TYPE_REG = join('assets', 'fonts', 'Xolonium-Regular.otf')
 FONT_TYPE_BOLD = join('assets', 'fonts', 'Xolonium-Bold.otf')
 FONT_COLOR = '#FFD700'
+BAR_BORDER_COLOR = '#A6A8AC'
 
 # volume and seek increment in seconds
-VOL_START = 0.7
-SEEK_INCR = 15
+VOL_START = 75
+VOL_MAX = 100
+# VOL_INCR = 3
+SEEK_INCR = 10
+# True: 1st load is random, False: 1st load is index 0
+OPEN_RANDOM_MODE = True
 
 BUTTONS = {
     # buttons
