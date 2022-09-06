@@ -2,10 +2,8 @@ __pycache__/
 __pycache__/*
 test*
 player*
-obj/debug*
-*copy
-*copy*
-copy*
-obj/*copy
-*backup
-obj/*backup
+**/debug.py
+**/*copy.py
+*copy.py
+**/*backup.py
+*backup.py
