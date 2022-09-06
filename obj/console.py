@@ -191,7 +191,9 @@ class Console:
         pg.time.delay(3000)
         self.running = False
 
-    ## PRIVATE FUNCTIONS
+    ##
+    ## PRIVATE METHODS
+    ##
     def _song_over(self):
         pass
 
@@ -278,6 +280,9 @@ class Console:
             ToggleButton('power', (WIDTH - BSIZE) // 2, row3_y),  
         )  
 
+    ##
+    ## RUN CONSOLE
+    ##
     def run(self):
         self.win.blit(self.bg, (0,0))
 
