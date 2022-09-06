@@ -1,9 +1,8 @@
 import pygame as pg
-from math import sin
 
 from obj.settings import BUTTONS
 
-class Button(pg.sprite.Sprite):
+class ToggleButton(pg.sprite.Sprite):
     def __init__(self, label, x, y):
         super().__init__()
 
@@ -13,32 +12,29 @@ class Button(pg.sprite.Sprite):
         self.radius = self.rect.width // 2
         self.label = label
         self.click_time = None
-        self.click_cooldown = 400
+        self.click_cooldown = 250
         self.can_click = True
         self.is_active = False
-
-    def activate(self, activate = True):
-        self.is_active = activate
-
-    def log_click(self):
-        self.click_time = pg.time.get_ticks()
-        self.can_click = False
-
-    def cooldown(self):
-        current_time = pg.time.get_ticks()
-
-        if not self.can_click:
-            if current_time - self.click_time >= self.click_cooldown:
-                self.can_click = True
 
     def is_clicked(self, mouse_pos):
         dx = self.rect.centerx - mouse_pos[0]
         dy = self.rect.centery - mouse_pos[1]
         sq = dx**2 + dy**2
-        if sq < self.radius**2:
-            return True
-        else:
-            return False
+        return True if sq < self.radius**2 else False
+
+    def log_click(self):
+        self.click_time = pg.time.get_ticks()
+        self.can_click = False
+
+    def activate(self, activate = True):
+        self.is_active = activate
+
+    def _cooldown(self):
+        current_time = pg.time.get_ticks()
+
+        if not self.can_click:
+            if current_time - self.click_time >= self.click_cooldown:
+                self.can_click = True
 
     def update(self):
         if self.is_active:
@@ -46,9 +42,9 @@ class Button(pg.sprite.Sprite):
         else:
             self.image = self.inactive_image
         self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
-        self.cooldown()
+        self._cooldown()
 
-class QuickButton(Button):
+class QuickButton(ToggleButton):
     def __init__(self, label, x, y):
         super().__init__(label, x, y)
 
@@ -61,48 +57,46 @@ class QuickButton(Button):
             self.image = self.inactive_image
            
         self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
-        self.cooldown()
+        self._cooldown()
 
-class MuteButton(Button):
-    def __init__(self, label, x, y):
+class HoldButton(ToggleButton):
+    def __init__(self, label, x, y, active_func):
         super().__init__(label, x, y)
 
-        self.saved_volume = pg.mixer.music.get_volume()
-
-    def toggle_mute(self):
-        current_volume = pg.mixer.music.get_volume()
-        if self.is_active:
-            pg.mixer.music.set_volume(self.saved_volume)
-            self.is_active = False
-        else:
-            self.saved_volume = current_volume
-            pg.mixer.music.set_volume(0)
-            self.is_active = True
-
-class VolumeButton(Button):
-    def __init__(self, label, x, y):
-        super().__init__(label, x, y)
-
-        self.volup_active = False
-        self.voldown_active = False
-
-    def volumize(self, sign):
-        volume = pg.mixer.music.get_volume()
-        if sign == '+' and volume + 0.01 <= 1:            
-            self.volup_active = True
-        if sign == '-' and volume - 0.005 >= 0:            
-            self.voldown_active = True
+        self.active_func = active_func
 
     def update(self):
-        volume = pg.mixer.music.get_volume()
-        if self.volup_active:
-            pg.mixer.music.set_volume(volume + 0.01)
+        if self.is_active:
+            self.active_func(self)
             self.image = self.active_image
-        elif self.voldown_active:
-            # No idea why pg wants to decrement faster than increment but I had to halve the speed
-            pg.mixer.music.set_volume(volume - 0.005)
-            self.image = self.active_image           
         else:
             self.image = self.inactive_image
         self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
 
+class MuteButton(ToggleButton):
+    def __init__(self, label, x, y, volume):
+        super().__init__(label, x, y)
+
+        self.saved_volume = volume
+
+    def toggle_mute(self, volume):
+        if self.is_active:
+            self.is_active = False
+            return self.saved_volume
+            
+        else:
+            self.saved_volume = volume
+            self.is_active = True
+            return 0
+
+class StopButton(ToggleButton):
+    def __init__(self, label, x, y):
+        super().__init__(label, x, y)
+
+        self.is_active = True
+
+class SeekButton(QuickButton):
+    def __init__(self, label, x, y):
+        super().__init__(label, x, y)
+        
+        self.click_cooldown = 50
