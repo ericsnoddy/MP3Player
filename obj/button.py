@@ -1,6 +1,6 @@
 import pygame as pg
 
-from obj.settings import BUTTONS
+from obj.data import BUTTONS
 
 class ToggleButton(pg.sprite.Sprite):
     def __init__(self, label, x, y):
@@ -44,30 +44,16 @@ class ToggleButton(pg.sprite.Sprite):
         self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
         self._cooldown()
 
-class QuickButton(ToggleButton):
-    def __init__(self, label, x, y):
-        super().__init__(label, x, y)
-
-    def update(self):
-        if not self.can_click:
-            self.is_active = True
-            self.image = self.active_image
-        else:
-            self.is_active = False
-            self.image = self.inactive_image
-           
-        self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
-        self._cooldown()
-
 class HoldButton(ToggleButton):
-    def __init__(self, label, x, y, active_func):
+    def __init__(self, label, x, y, do_while_hold_click_func):
         super().__init__(label, x, y)
 
-        self.active_func = active_func
+        # passed functions don't initialize with ()
+        self.do_while_hold_click_func = do_while_hold_click_func
 
     def update(self):
         if self.is_active:
-            self.active_func(self)
+            self.do_while_hold_click_func(self)
             self.image = self.active_image
         else:
             self.image = self.inactive_image
@@ -79,6 +65,8 @@ class MuteButton(ToggleButton):
 
         self.saved_volume = volume
 
+    # toggling mute returns a new volume value
+    # so console doesn't have to track a saved volume
     def toggle_mute(self, volume):
         if self.is_active:
             self.is_active = False
@@ -94,6 +82,21 @@ class StopButton(ToggleButton):
         super().__init__(label, x, y)
 
         self.is_active = True
+
+class QuickButton(ToggleButton):
+    def __init__(self, label, x, y):
+        super().__init__(label, x, y)
+
+    def update(self):
+        if not self.can_click:
+            self.is_active = True
+            self.image = self.active_image
+        else:
+            self.is_active = False
+            self.image = self.inactive_image
+           
+        self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
+        self._cooldown()
 
 class SeekButton(QuickButton):
     def __init__(self, label, x, y):
