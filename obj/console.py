@@ -215,6 +215,8 @@ class Console:
         # This returns the position mark in seconds we need to seek to
         new_position = self.progbar.pos_to_value(click_x, self.song_length)
         current_position = self._get_position(self.song_offset)
+
+        # simply access the seek function with calculated seek increments
         if new_position > current_position:
             ff_btn = self._get_button('ff')
             self.seek(ff_btn, incr=(new_position - current_position))
