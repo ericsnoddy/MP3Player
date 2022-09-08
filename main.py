@@ -7,6 +7,9 @@ from obj.console import Console
 
 def main():
     
+    # gather and parse command-line arguments
+    # args = parse_args(sys.argv)
+
     # init
     win, clock = init_pygame()
     console = Console(win)
@@ -85,6 +88,9 @@ def event_handler(console, event):
     # catch custom flag
     if event.type == console.SONG_OVER:
         console.song_over()
+
+# def parse_args(argsv):
+#     return [sys.argv[i] for i in range (1, len(sys.argv))]
 
 def init_pygame():
     
