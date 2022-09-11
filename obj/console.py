@@ -10,7 +10,7 @@ from os.path import join
 from random import randrange
 
 from obj.slider import Slider
-from obj.display import ListUI
+from obj.display import ListUI, NowPlaying
 from obj.button import ToggleButton, QuickButton, HoldButton, MuteButton, StopButton, SeekButton
 from obj.data import BG_DEFAULT, FONT_TYPE_REG, FONT_TYPE_BOLD
 from obj.settings import (
@@ -48,7 +48,7 @@ class Console:
 
         # fonts
         self.font_reg = pg.font.Font(FONT_TYPE_REG, 14)
-        self.font_duration = pg.font.Font(FONT_TYPE_BOLD, 30)
+        self.font_duration = pg.font.Font(FONT_TYPE_BOLD, 8)
         self.font_goodbye = pg.font.Font(FONT_TYPE_BOLD, 50)
 
         # default flags and user setup
@@ -76,8 +76,7 @@ class Console:
         self.setup_button = pg.sprite.GroupSingle()
         self._group_btns()
         self._init_bars()
-
-        # see setup for file display ui init
+        # see setup for file display ui init - it reqs file list
 
     def setup(self):
         if not self.music_folder:
@@ -105,8 +104,8 @@ class Console:
             if len(self.song_paths) == 0:
                 self.music_folder = None
         else:
-            # init file display ui - 349px height exactly fits 28 rows of 10pt font + 1 row 11pt font
-            self.list_ui = ListUI(self.win, PAD//2, 2*PAD - 2 , WIDTH - PAD, UI_HEIGHT, self.song_paths, self.now_playing_index)   
+            # initialize the list and infobar ui
+            self._init_ui()
 
             # load first track and end setup mode
             if OPEN_RANDOM_MODE:
@@ -251,16 +250,29 @@ class Console:
 
         position = round(self._get_position(self.song_offset), 2)
 
-        hours = "{:0>2d}".format(int(position // 3600))
         mins = "{:0>2d}".format(int(position // 60))
         secs = "{:0>2d}".format(int(position % 60))
         tenths = int(10 * (position % 60 - int(position % 60)))
 
-        return f'{hours}:{mins}:{secs}.{tenths}'
+        return f'{mins}:{secs}.{tenths}'
+
+    def _get_formatted_song_length(self):
+        
+        position = self.song_length
+
+        mins = "{:0>2d}".format(int(position // 60))
+        secs = "{:0>2d}".format(int(position % 60))
+        tenths = int(10 * (position % 60 - int(position % 60)))
+
+        return f'{mins}:{secs}.{tenths}'
 
     def _display_duration(self):
         time_played_text = self.font_duration.render(self._get_formatted_duration(), True, FONT_COLOR)
-        self.win.blit(time_played_text, ((WIDTH - PAD*2 - time_played_text.get_width()) // 2 + PAD, 10))
+        self.win.blit(time_played_text, (5, ROW1_Y - BSIZE - 2*BPAD + 30))
+
+        time_played_text = self.font_duration.render(self._get_formatted_song_length(), True, FONT_COLOR)
+        self.win.blit(time_played_text, (self.progbar.rect_border.right + 4, ROW1_Y - BSIZE - 2*BPAD + 30))
+        
 
     def _get_position(self, start_pos, rew=0, ff=0):
 
@@ -343,7 +355,13 @@ class Console:
         self.volbar = Slider(x, ROW2_Y + 10, w, BSIZE - 20, self.volume, 100)
 
         # song progress bar
-        self.progbar = Slider(BPAD, ROW1_Y - BSIZE + 2*BPAD, WIDTH - 2*BPAD, BPAD + 3, self._get_position(self.song_offset), self.song_length)
+        self.progbar = Slider(BSIZE + BPAD, ROW1_Y - BSIZE + 2*BPAD, WIDTH - 2*(BSIZE + BPAD), BPAD - 1, self._get_position(self.song_offset), self.song_length)
+
+    def _init_ui(self):
+        # init file display ui
+        self.list_ui = ListUI(self.win, PAD//2, 2*PAD + 10, WIDTH - PAD, UI_HEIGHT - 12, self.song_paths, self.now_playing_index)   
+        # Now Playing infobar
+        self.now_playing = NowPlaying(self.win, PAD//2, 2, WIDTH - PAD, 70, self.song_paths, self.now_playing_index)
 
     ## RUN CONSOLE
     ##
@@ -366,5 +384,9 @@ class Console:
                 # clickable songlist
                 self.list_ui.update(self.now_playing_index)
                 self.list_ui.draw()
+
+                # infobar
+                self.now_playing.update(self.now_playing_index)
+                self.now_playing.draw()
             else: 
                 self.setup()
