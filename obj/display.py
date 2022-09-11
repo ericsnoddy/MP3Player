@@ -2,7 +2,19 @@ import pygame as pg
 from mutagen.easyid3 import EasyID3 # for extracting metadata
 from mutagen.mp3 import MP3
 
-from obj.settings import FONT_COLOR, LIST_BORDER_COLOR, INFO_BORDER_COLOR, LIST_FONTSIZE_REG, LIST_FONTSIZE_BOLD
+from obj.settings import (
+    FONT_COLOR,
+    FONT_COLOR_TITLE,
+    FONT_COLOR_ARTIST,
+    FONT_COLOR_ALBUM,
+    LIST_BORDER_COLOR, 
+    INFO_BORDER_COLOR, 
+    LIST_FONTSIZE_REG, 
+    LIST_FONTSIZE_BOLD, 
+    NP_FONTSIZE_TITLE, 
+    NP_FONTSIZE_ARTIST, 
+    NP_FONTSIZE_ALBUM,
+)
 from obj.data import FONT_TYPE_REG, FONT_TYPE_BOLD
 
 '''
@@ -30,7 +42,7 @@ class ListUI:
         # self._extract_metadata(self.song_paths[self.now_playing_index])
 
         # fonts
-        self.font_list = pg.font.Font(FONT_TYPE_REG, LIST_FONTSIZE_REG )
+        self.font_list = pg.font.Font(FONT_TYPE_REG, LIST_FONTSIZE_REG)
         self.font_list_bold = pg.font.Font(FONT_TYPE_BOLD, LIST_FONTSIZE_BOLD)
 
     def _get_title(self, full_path):
@@ -84,13 +96,20 @@ class NowPlaying:
         self.win = win
         self.rect = pg.Rect(x, y, w, h)
 
+        # file info
         self.song_paths = song_paths
         self.song_titles = self._get_titles_list(self.song_paths)
         self.now_playing_index = now_playing_index
 
+        # get initial metadata
         self.artist = self._get_meta('artist')
         self.album = self._get_meta('album')
         self.song = self._get_meta('title')
+
+        # fonts
+        self.artist_font = pg.font.Font(FONT_TYPE_REG, NP_FONTSIZE_ARTIST)
+        self.album_font = pg.font.Font(FONT_TYPE_REG, NP_FONTSIZE_ALBUM)
+        self.song_font = pg.font.Font(FONT_TYPE_BOLD, NP_FONTSIZE_TITLE)
 
     def _get_titles_list(self, song_paths):
         song_titles = []
@@ -125,12 +144,25 @@ class NowPlaying:
 
         if self.now_playing_index != new_index:           
             self.now_playing_index = new_index
-            self.artist = self._get_meta('artist')
-            self.album = self._get_meta('album')
-            self.song = self._get_meta('title')
+
+            # the mutagen meta extraction module returns a list, so get first indexed value.
+            self.artist = self._get_meta('artist')[0]
+            self.album = self._get_meta('album')[0]
+            self.song = self._get_meta('title')[0]
 
     def draw(self):
         pg.draw.rect(self.win, INFO_BORDER_COLOR, self.rect, 1)
 
-        # song_playing_txt = self.font_list_bold.render(self.now_playing, True, FONT_COLOR)
-        # self.win.blit(song_playing_txt, (self.rect.x + 5, self.rect.y + 5))
+        song_txt = self.song_font.render(self.song, True, FONT_COLOR_TITLE)
+        self.win.blit(song_txt, (self.rect.x + 8, self.rect.y + 5))
+
+        song_h = song_txt.get_height()
+        artist_txt = self.artist_font.render(self.artist, True, FONT_COLOR_ARTIST)
+        self.win.blit(artist_txt, (self.rect.x + 8, self.rect.y + 5 + song_h))
+
+        artist_h = artist_txt.get_height()
+        album_txt = self.album_font.render(self.album, True, FONT_COLOR_ALBUM)
+        self.win.blit(album_txt, (self.rect.x + 8, self.rect.y + 5 + song_h + artist_h))
+
+        # We need to check if the width of text is wider than the infobar;
+        # then I will code the text to bounce back and forth for readability
