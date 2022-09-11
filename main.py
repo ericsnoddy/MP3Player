@@ -12,7 +12,7 @@ def main():
 
     # init
     win, clock = init_pygame()
-    console = Console(win)
+    console = Console(win)  # will pass argv 
 
     # program loop
     running = True
