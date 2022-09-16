@@ -102,4 +102,4 @@ class SeekButton(QuickButton):
     def __init__(self, label, x, y):
         super().__init__(label, x, y)
         
-        self.click_cooldown = 50
+        self.click_cooldown = 25
