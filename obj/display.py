@@ -175,12 +175,15 @@ class ListUI(NowPlaying):
         # 'erase' the previous draw for a clean re-draw
         self.list_surf.fill((0))
 
+        # get display titles
+
+
         y = 0
         for index, title in enumerate(self.titles):
             artist = self.get_meta('artist', index)
             song = self.get_meta('title', index)
 
-            song = f'{artist} - {song}'
+            song = f'titles i: {index} - {artist} - {song}'
 
             if self.now_playing_index != self.titles.index(title):
                 self.list_surf.blit(f.render(song, True, LIST_FONT_COLOR), (0, y))
@@ -195,30 +198,33 @@ class ListUI(NowPlaying):
             self.scroll_y = max(self.scroll_y - 48, -(self.list_surf.get_height()))
 
     # scroll to the relevant song
-    def _get_scroll_y_click(self):
+    def _refresh_display_list_on_click(self):
         clicks = pg.mouse.get_pressed()
-        win_rect = self.win_sub.get_rect()
 
-        if clicks and win_rect.collidepoint(pg.mouse.get_pos()):
-            y = pg.mouse.get_pos()[1]
-            print(y)
+        if clicks[0] and self.rect.collidepoint(pg.mouse.get_pos()):
+            mouse_y = pg.mouse.get_pos()[1]
+            top_row_index = (-self.scroll_y // 12) + (mouse_y - self.rect.top) // 12
+            try:
+                print(f'{self.titles[top_row_index]}')
+            except:
+                print('index error')
 
     def update(self, new_index):
         if self.now_playing_index != new_index:
             self.now_playing_index = new_index
 
             self._enumerate_list()
-        self._get_scroll_y_click()
+        self._refresh_display_list_on_click()
 
     def draw(self):
         pg.draw.rect(self.win, LIST_BORDER_COLOR, self.rect, 1)
 
         self.win_sub.blit(self.list_surf, (4, self.scroll_y))
 
-        debug([
-            f'{self.rect.top} < {-self.scroll_y} < {self.rect.bottom}'],
-            x=200, y=20
-        )
+        # debug([
+        #     f'{self.rect.top} < {-self.scroll_y} < {self.rect.bottom}'],
+        #     x=200, y=20
+        # )
 
         # if len(self.list) > 14:
         #     for index, row in enumerate(self.list):
