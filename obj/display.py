@@ -164,7 +164,7 @@ class ListUI(NowPlaying):
 
     def _create_list_surface(self):
         list_w = self.rect.width - 4
-        list_h = len(self.titles) * (LIST_FONTSIZE + 2) + 20
+        list_h = len(self.titles) * (LIST_FONTSIZE + 2)
         return pg.Surface((list_w, list_h), pg.SRCALPHA)
 
     def _enumerate_list(self):
@@ -176,7 +176,8 @@ class ListUI(NowPlaying):
         self.list_surf.fill((0))
 
         # get display titles
-
+        #We only want to render titles within a range of the display window; otherwise a large list will kill performance.
+        
 
         y = 0
         for index, title in enumerate(self.titles):
@@ -195,26 +196,27 @@ class ListUI(NowPlaying):
         if direction == 'up': 
             self.scroll_y = min(self.scroll_y + 48, 0)
         elif direction == 'down':
-            self.scroll_y = max(self.scroll_y - 48, -(self.list_surf.get_height()))
+            self.scroll_y = max(self.scroll_y - 48, -(self.list_surf.get_height()) + 12)
 
     # scroll to the relevant song
-    def _refresh_display_list_on_click(self):
+    def _refresh_list_click_detection(self):
         clicks = pg.mouse.get_pressed()
 
         if clicks[0] and self.rect.collidepoint(pg.mouse.get_pos()):
             mouse_y = pg.mouse.get_pos()[1]
-            top_row_index = (-self.scroll_y // 12) + (mouse_y - self.rect.top) // 12
+            row_index = (mouse_y - self.rect.top - self.scroll_y) // 12
             try:
-                print(f'{self.titles[top_row_index]}')
+                print(f'{self.titles[row_index]}')
             except:
-                print('index error')
+                # assume final row was intended
+                print(f'{self.titles[-1]}')
 
     def update(self, new_index):
         if self.now_playing_index != new_index:
             self.now_playing_index = new_index
 
             self._enumerate_list()
-        self._refresh_display_list_on_click()
+        self._refresh_list_click_detection()
 
     def draw(self):
         pg.draw.rect(self.win, LIST_BORDER_COLOR, self.rect, 1)
