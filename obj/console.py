@@ -1,9 +1,6 @@
 import pygame as pg
 from pygame.locals import *
 from tkinter import filedialog
-    # metadata extraction
-from mutagen.oggvorbis import OggVorbis as Ogg
-from mutagen.mp3 import MP3
 
 from os import walk
 from os.path import join
@@ -97,7 +94,7 @@ class Console:
                 for filename in files:
                     # Creates 2 lists that are index-synced: one for full filepath, 
                     # and one for file filenames; so I don't have to deal with slicing later
-                    if filename.endswith('.ogg') or filename.endswith('.mp3'):                    
+                    if filename.endswith('.mp3'):                    
                         self.song_paths.append(join(root, filename))
 
             # no valid filetypes - start over
@@ -223,6 +220,9 @@ class Console:
             rew_btn = self._get_button('rew')
             self.seek(rew_btn, incr=(current_position - new_position))
 
+    def scroll(self, direction):
+        self.list_ui.scroll(direction)
+
     def song_over(self):
         # don't cycle if the song was stopped by the user
         stop_btn = self._get_button('stop')
@@ -273,7 +273,6 @@ class Console:
         time_played_text = self.font_duration.render(self._get_formatted_song_length(), True, FONT_COLOR)
         self.win.blit(time_played_text, (self.progbar.rect_border.right + 4, ROW1_Y - BSIZE - 2*BPAD + 30))
         
-
     def _get_position(self, start_pos, rew=0, ff=0):
 
         if not self.song_in_progress: pos = 0
@@ -311,13 +310,8 @@ class Console:
                 self.skip(next_btn)                 
 
     def _log_song_length(self):
-        song = self.song_paths[self.now_playing_index]
-        if song.endswith('.ogg'):
-            song = Ogg(song)
-        else:
-            song = MP3(song)
 
-        self.song_length = song.info.length
+        self.song_length = self.now_playing.get_meta('length', self.now_playing_index)
 
     def _get_button(self, label):
         btns = []
@@ -359,7 +353,7 @@ class Console:
 
     def _init_ui(self):
         # init file display ui
-        self.list_ui = ListUI(self.win, PAD//2, 2*PAD + 10, WIDTH - PAD, UI_HEIGHT - 12, self.song_paths, self.now_playing_index)   
+        self.list_ui = ListUI(self.win, PAD//2, 2*PAD + 10, WIDTH - PAD, UI_HEIGHT, self.song_paths, self.now_playing_index)   
         # Now Playing infobar
         self.now_playing = NowPlaying(self.win, PAD//2, 2, WIDTH - PAD, 70, self.song_paths, self.now_playing_index)
 
