@@ -76,6 +76,10 @@ def event_handler(console, event):
         elif console.progbar.is_clicked(event.pos):
             console.adjust_progbar(event.pos[0])
 
+        # buttons 4 & 5 are mousewheel up and down, respectively
+        if event.button == 4: console.scroll('up')
+        if event.button == 5: console.scroll('down')
+
     if event.type == MOUSEBUTTONUP:
 
         # Check if volup or down is active; deactivate if so
@@ -84,6 +88,11 @@ def event_handler(console, event):
         for vol in vols:
             if vol.is_active:
                 vol.activate(False)
+    
+    # Keyboard shortcuts
+    if event.type == KEYDOWN:
+        if event.key == K_UP: console.scroll('up')
+        if event.key == K_DOWN: console.scroll('down')
 
     # catch custom flag
     if event.type == console.SONG_OVER:
