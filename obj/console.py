@@ -355,7 +355,7 @@ class Console:
 
     def _init_ui(self):
         # init file display ui
-        self.list_ui = ListUI(self.win, PAD//2, 2*PAD + 10, WIDTH - PAD, UI_HEIGHT, self.song_paths, self.now_playing_index)   
+        self.list_ui = ListUI(self.win, PAD//2, 2*PAD + 9, WIDTH - PAD, UI_HEIGHT, self.song_paths, self.now_playing_index)   
         # Now Playing infobar
         self.now_playing = NowPlaying(self.win, PAD//2, 2, WIDTH - PAD, 70, self.song_paths, self.now_playing_index)
 
