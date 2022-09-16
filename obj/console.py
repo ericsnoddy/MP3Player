@@ -185,7 +185,9 @@ class Console:
 
         if seek_btn.label == 'ff':
             self.song_offset = self._get_position(self.song_offset, ff=incr)
-        pg.mixer.music.play(0, self.song_offset)
+        
+        if pg.mixer.music.get_busy():
+            pg.mixer.music.play(0, self.song_offset)
 
     def volumize(self, vol_btn):
         vol_btn.activate()
