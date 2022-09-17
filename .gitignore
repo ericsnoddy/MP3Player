@@ -9,3 +9,4 @@ player*
 *backup.py
 debug*
 **/debug*
+obj/debug.py
