@@ -175,7 +175,7 @@ class ListUI(NowPlaying):
         # click cooldown
         self.can_click = False
         self.click_time = pg.time.get_ticks()
-        self.click_cooldown = 200
+        self.click_cooldown = 300
 
         # need a way to signal console to change songs on list click
         self.change_signal = False
@@ -214,12 +214,10 @@ class ListUI(NowPlaying):
             self.scroll_y = max(self.scroll_y - 48, -(self.list_surf.get_height()) + 12)
 
     # scroll to the relevant song
-    def _refresh_list_click_detection(self):
-        clicks = pg.mouse.get_pressed()
-
-        if clicks[0] and self.rect.collidepoint(pg.mouse.get_pos()) and self.can_click:
+    def refresh_list_click_detection(self, mouse_pos):
+        if self.rect.collidepoint(mouse_pos) and self.can_click:
             self._log_click()
-            mouse_y = pg.mouse.get_pos()[1]
+            mouse_y = mouse_pos[1]
             # We derive the index of the song by tracking the y position and its offset and dividing by the row height
             row_index = (mouse_y - self.rect.top - self.scroll_y) // LIST_ROW_HEIGHT
 
@@ -243,7 +241,6 @@ class ListUI(NowPlaying):
             self.now_playing_index = new_index
 
             self._enumerate_list()
-        self._refresh_list_click_detection()
         self._cooldown()
 
     def draw(self):

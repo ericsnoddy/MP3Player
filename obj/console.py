@@ -33,7 +33,10 @@ from obj.debug import debug
 class Console:
     def __init__(self, win):
 
+        # if the console stops running, main() will quit
         self.running = True
+
+        # get the display surface
         self.win = win
 
         # audio
@@ -64,8 +67,8 @@ class Console:
         pg.mixer.music.set_endevent(self.SONG_OVER)
 
         # All the text that can be pre-rendered for performance
-        self.setup_txt = self.font_reg.render('Browse to music folders', True, FONT_COLOR)
-        self.setup_txt2 = self.font_reg.render('supports .ogg and .mp3', True, FONT_COLOR)
+        self.setup_txt = self.font_reg.render('Browse to .mp3 folders', True, FONT_COLOR)
+        self.setup_txt2 = self.font_reg.render('An especially large collection may lag', True, FONT_COLOR)
         self.goodbye_txt = self.font_goodbye.render('Ciao!', True, FONT_COLOR)
 
         # button sprite group & slider bar setup
@@ -110,6 +113,9 @@ class Console:
             pg.mixer.music.load(self.song_paths[self.now_playing_index])
             self._log_song_length()
             self.setup_mode = False
+
+            # remove events from the queue; this is to prevent undesirable click detection before list is loaded
+            pg.event.clear()
 
     def mute(self, mute_btn):
         mute_btn.log_click()
@@ -224,6 +230,11 @@ class Console:
 
     def scroll(self, direction):
         self.list_ui.scroll(direction)
+
+    def handle_list_clicks(self, mouse_pos):
+        # This runs a check if a collision occurs, signals a change and new index on click
+        # actual click handling is managed by self._heed_list_signal()
+        self.list_ui.refresh_list_click_detection(mouse_pos)
 
     def song_over(self):
         # don't cycle if the song was stopped by the user

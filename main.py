@@ -80,6 +80,10 @@ def event_handler(console, event):
         if event.button == 4: console.scroll('up')
         if event.button == 5: console.scroll('down')
 
+        # handle list clicks
+        if event.button == 1 and not console.setup_mode: 
+            console.handle_list_clicks(event.pos)
+
     if event.type == MOUSEBUTTONUP:
 
         # Check if volup or down is active; deactivate if so
