@@ -68,7 +68,7 @@ class Console:
 
         # All the text that can be pre-rendered for performance
         self.setup_txt = self.font_reg.render('Browse to .mp3 folders', True, FONT_COLOR)
-        self.setup_txt2 = self.font_reg.render('An especially large collection may lag', True, FONT_COLOR)
+        self.setup_txt2 = self.font_reg.render('An especially large collection may cause lag', True, FONT_COLOR)
         self.goodbye_txt = self.font_goodbye.render('Ciao!', True, FONT_COLOR)
 
         # button sprite group & slider bar setup
