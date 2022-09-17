@@ -32,4 +32,9 @@ class Slider:
         pg.draw.rect(self.win, BAR_COLOR, self.rect)
         pg.draw.rect(self.win, BAR_BORDER_COLOR, self.rect_border, 2)
 
+class Scroller(Slider):
+    def __init__(self, x, y, width, height, initial_value, initial_max):
+        super().__init__(x, y, width, height, initial_value, initial_max)
+
+        
 

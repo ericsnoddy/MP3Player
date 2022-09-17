@@ -17,6 +17,7 @@ ROW3_Y = HEIGHT - BPAD - BSIZE
 # UI - program is designed to fit 28 rows of 12px height text + 1 row of 13px height text
 UI_HEIGHT = 337
 LIST_FONTSIZE = 10
+LIST_ROW_HEIGHT = 12    # LIST_FONTSIZE + 2px
 
 NP_FONTSIZE_TITLE = 20
 NP_FONTSIZE_ARTIST = 16
