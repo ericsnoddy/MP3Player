@@ -4,7 +4,8 @@ pygame.init()
 # Constants
 BG_COLOR = 'black'
 FONT_COLOR = 'white'
-TOPLEFT = (10,10)
+FONT_SIZE = 20
+TOPLEFT = (10,30)
 FONT = None  # None for pygame default font
 ANTIALIAS = True
 
@@ -12,8 +13,8 @@ ANTIALIAS = True
 # with rect at position topleft = (x,y) = TOPLEFT
 # Must input as a list of strings even if single line
 
-def debug(multistring_list, x=TOPLEFT[0], y=TOPLEFT[1]):
-    f = pygame.font.Font(FONT,30)  
+def debug(multistring_list, x=TOPLEFT[0], y=TOPLEFT[1], font_size=FONT_SIZE):
+    f = pygame.font.Font(FONT, font_size)  
     display_surf = pygame.display.get_surface()
     line_height = pygame.font.Font.get_linesize(f)
 
