@@ -302,6 +302,9 @@ class Console:
             # do not restart the track
             selection = 'pass'
 
+        if selection == 'list':
+            self.now_playing_index = self.list_ui.change_index
+
         if selection != 'pass':
             self.song_offset = 0
             try:    # make sure file is not corrupt/unreadable, else go to next song
@@ -314,6 +317,13 @@ class Console:
     def _log_song_length(self):
 
         self.song_length = self.now_playing.get_meta('length', self.now_playing_index)
+
+    def _heed_list_signal(self):
+        if self.list_ui.change_signal:
+            self._load_song('list')
+            play_btn = self._get_button('play')
+            self.play(play_btn)
+            self.list_ui.change_signal = False
 
     def _get_button(self, label):
         btns = []
@@ -378,6 +388,7 @@ class Console:
                 self.progbar.draw()
 
                 # clickable songlist
+                self._heed_list_signal()
                 self.list_ui.update(self.now_playing_index)
                 self.list_ui.draw()
 

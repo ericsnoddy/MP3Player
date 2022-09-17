@@ -88,7 +88,7 @@ def event_handler(console, event):
         for vol in vols:
             if vol.is_active:
                 vol.activate(False)
-    
+
     # Keyboard shortcuts
     if event.type == KEYDOWN:
         if event.key == K_UP: console.scroll('up')

@@ -1,3 +1,4 @@
+from sqlite3 import Row
 import pygame as pg
 from pygame.locals import *
 from mutagen.easyid3 import EasyID3 # for extracting metadata
@@ -11,6 +12,7 @@ from obj.settings import (
     LIST_BORDER_COLOR, 
     INFO_BORDER_COLOR, 
     LIST_FONTSIZE,
+    LIST_ROW_HEIGHT,
     LIST_FONT_COLOR,
     NP_FONTSIZE_TITLE, 
     NP_FONTSIZE_ARTIST, 
@@ -76,6 +78,14 @@ class NowPlaying:
             except:
                 artist = 'Unknown Artist'
             return artist
+
+        elif key == 'track':
+            try:
+                track = meta['tracknumber'][0]
+            except:
+                track = '#'
+            return track
+
         if key == 'length':
             try:
                 length = meta.info.length
@@ -162,9 +172,18 @@ class ListUI(NowPlaying):
         self.now_playing = self.titles[self.now_playing_index]
         self.list_surf = self._create_list_surface()
 
+        # click cooldown
+        self.can_click = False
+        self.click_time = pg.time.get_ticks()
+        self.click_cooldown = 200
+
+        # need a way to signal console to change songs on list click
+        self.change_signal = False
+        self.change_index = self.now_playing_index
+
     def _create_list_surface(self):
         list_w = self.rect.width - 4
-        list_h = len(self.titles) * (LIST_FONTSIZE + 2)
+        list_h = len(self.titles) * LIST_ROW_HEIGHT
         return pg.Surface((list_w, list_h), pg.SRCALPHA)
 
     def _enumerate_list(self):
@@ -175,21 +194,17 @@ class ListUI(NowPlaying):
         # 'erase' the previous draw for a clean re-draw
         self.list_surf.fill((0))
 
-        # get display titles
-        #We only want to render titles within a range of the display window; otherwise a large list will kill performance.
-        
-
         y = 0
         for index, title in enumerate(self.titles):
             artist = self.get_meta('artist', index)
             song = self.get_meta('title', index)
 
-            song = f'titles i: {index} - {artist} - {song}'
+            row = f'{artist} - {song}'
 
             if self.now_playing_index != self.titles.index(title):
-                self.list_surf.blit(f.render(song, True, LIST_FONT_COLOR), (0, y))
+                self.list_surf.blit(f.render(row, True, LIST_FONT_COLOR), (0, y))
             else: 
-                self.list_surf.blit(f_.render(song, True, FONT_COLOR), (0, y))
+                self.list_surf.blit(f_.render(row, True, FONT_COLOR), (0, y))
             y += LIST_FONTSIZE + 2  # font is rendered with 1 px padding top/bottom
 
     def scroll(self, direction):
@@ -202,14 +217,26 @@ class ListUI(NowPlaying):
     def _refresh_list_click_detection(self):
         clicks = pg.mouse.get_pressed()
 
-        if clicks[0] and self.rect.collidepoint(pg.mouse.get_pos()):
+        if clicks[0] and self.rect.collidepoint(pg.mouse.get_pos()) and self.can_click:
+            self._log_click()
             mouse_y = pg.mouse.get_pos()[1]
-            row_index = (mouse_y - self.rect.top - self.scroll_y) // 12
-            try:
-                print(f'{self.titles[row_index]}')
-            except:
-                # assume final row was intended
-                print(f'{self.titles[-1]}')
+            # We derive the index of the song by tracking the y position and its offset and dividing by the row height
+            row_index = (mouse_y - self.rect.top - self.scroll_y) // LIST_ROW_HEIGHT
+
+            if self.now_playing_index != row_index:
+                self.change_signal = True
+                self.change_index = row_index
+
+    def _log_click(self):
+        self.click_time = pg.time.get_ticks()
+        self.can_click = False
+
+    def _cooldown(self):
+        current_time = pg.time.get_ticks()
+
+        if not self.can_click:
+            if current_time - self.click_time >= self.click_cooldown:
+                self.can_click = True
 
     def update(self, new_index):
         if self.now_playing_index != new_index:
@@ -217,76 +244,8 @@ class ListUI(NowPlaying):
 
             self._enumerate_list()
         self._refresh_list_click_detection()
+        self._cooldown()
 
     def draw(self):
         pg.draw.rect(self.win, LIST_BORDER_COLOR, self.rect, 1)
-
         self.win_sub.blit(self.list_surf, (4, self.scroll_y))
-
-        # debug([
-        #     f'{self.rect.top} < {-self.scroll_y} < {self.rect.bottom}'],
-        #     x=200, y=20
-        # )
-
-        # if len(self.list) > 14:
-        #     for index, row in enumerate(self.list):
-        #         if index != 13:
-        #             list_item_text = self.font_list.render(row, True, FONT_COLOR)
-        #         else:
-        #             list_item_text = self.font_list_bold.render(row, True, FONT_COLOR)
-        #         self.win.blit(list_item_text, (self.rect.x + 1, self.rect.top + 1 + index*list_item_text.get_height()))
- 
-
-# class ListUI(NowPlaying):
-#     def __init__(self, win, x, y, w, h, song_paths, now_playing_index):
-#         super().__init__(win, x, y, w, h, song_paths, now_playing_index)
-
-#         self.now_playing = self.titles[self.now_playing_index]
-#         self.list_top, self.list_bottom = self._update_list()
-
-#         # fonts
-#         self.font_list = pg.font.Font(FONT_TYPE_REG, LIST_FONTSIZE)
-#         self.font_list_bold = pg.font.Font(FONT_TYPE_BOLD, LIST_FONTSIZE)
-
-#     def _update_list(self):
-#         list_top = []   # Fill 28 slots with now_playing_index at index 13 (appx the center row)
-#         list_bottom = []
-
-#         if len(self.titles) >= 13:
-#             for index, row in enumerate(self.titles):
-#                     list_top.append(self.titles[i])
-
-#         else:
-#             for i in range(self.now_playing_index - ,16):
-#                 display_list.append(self.titles[self.now_playing_index + i])
-
-#         return display_list
-
-#     def update(self, new_index):
-#         if self.now_playing_index != new_index:
-#             self.now_playing_index = new_index
-#             self.now_playing = self.titles[self.now_playing_index]
-#             self.list = self._update_list()
-
-#     def draw(self):
-#         pg.draw.rect(self.win, LIST_BORDER_COLOR, self.rect, 1)
-
-#         # This is probably way more complicated than it needs to be but it gets the job done.
-#         # We want the bold song to stay approx in the center, but have different behavior
-#         # when the list is too short for a center (highlight whatever row is now_playing)
-#         if len(self.list) > 14:
-#             for index, row in enumerate(self.list):
-#                 if index != 13:
-#                     list_item_text = self.font_list.render(row, True, FONT_COLOR)
-#                 else:
-#                     list_item_text = self.font_list_bold.render(row, True, FONT_COLOR)
-#                 self.win.blit(list_item_text, (self.rect.x + 1, self.rect.top + 1 + index*list_item_text.get_height()))
-#         else:
-#             for index, row in enumerate(self.list):
-#                 if index != self.now_playing_index:
-#                     list_item_text = self.font_list.render(row, True, FONT_COLOR)
-#                 else:
-#                     list_item_text = self.font_list_bold.render(row, True, FONT_COLOR)
-#                 self.win.blit(list_item_text, (self.rect.x + 1, self.rect.top + index*list_item_text.get_height()))
-
-            
