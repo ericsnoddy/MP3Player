@@ -8,3 +8,4 @@ player*
 **/*backup.py
 *backup.py
 debug*
+**/debug*
