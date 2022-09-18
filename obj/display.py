@@ -86,7 +86,7 @@ class NowPlaying:
                 track = '#'
             return track
 
-        if key == 'length':
+        elif key == 'length':
             try:
                 length = meta.info.length
             except:
@@ -194,7 +194,7 @@ class ListUI(NowPlaying):
         # 'erase' the previous draw for a clean re-draw
         self.list_surf.fill((0))
 
-        y = 0
+        y = 1   # 1 px padding
         for index, title in enumerate(self.titles):
             artist = self.get_meta('artist', index)
             song = self.get_meta('title', index)
@@ -205,7 +205,7 @@ class ListUI(NowPlaying):
                 self.list_surf.blit(f.render(row, True, LIST_FONT_COLOR), (0, y))
             else: 
                 self.list_surf.blit(f_.render(row, True, FONT_COLOR), (0, y))
-            y += LIST_FONTSIZE + 2  # font is rendered with 1 px padding top/bottom
+            y += LIST_FONTSIZE + 2  # font is rendered with 1 px padding
 
     def scroll(self, direction):
         if direction == 'up': 
@@ -214,16 +214,23 @@ class ListUI(NowPlaying):
             self.scroll_y = max(self.scroll_y - 48, -(self.list_surf.get_height()) + 12)
 
     # scroll to the relevant song
-    def refresh_list_click_detection(self, mouse_pos):
+    def change_index_click_detection(self, mouse_pos):
         if self.rect.collidepoint(mouse_pos) and self.can_click:
             self._log_click()
             mouse_y = mouse_pos[1]
-            # We derive the index of the song by tracking the y position and its offset and dividing by the row height
-            row_index = (mouse_y - self.rect.top - self.scroll_y) // LIST_ROW_HEIGHT
+            # Derive the index of the song by tracking the y position and its offset and dividing by the row height
+            row_index = (mouse_y - (self.rect.top + 1) - self.scroll_y) // LIST_ROW_HEIGHT
+            if row_index >= len(self.titles):
+                row_index = len(self.titles) - 1
 
             if self.now_playing_index != row_index:
                 self.change_signal = True
                 self.change_index = row_index
+
+    ## PRIVATE METHODS
+    ##
+    def scrolly_from_index(self, index):
+        self.scroll_y = 0
 
     def _log_click(self):
         self.click_time = pg.time.get_ticks()
@@ -246,3 +253,7 @@ class ListUI(NowPlaying):
     def draw(self):
         pg.draw.rect(self.win, LIST_BORDER_COLOR, self.rect, 1)
         self.win_sub.blit(self.list_surf, (4, self.scroll_y))
+
+        # debug([
+        #     f'{self.now_playing_index} - {self.scroll_y}'
+        # ])

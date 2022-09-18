@@ -22,6 +22,8 @@ from obj.settings import (
     ROW2_Y,
     ROW3_Y,
     UI_HEIGHT,
+    MENU_W,
+    MENU_H,
     FONT_COLOR, 
     VOL_START,
     SEEK_INCR,
@@ -62,6 +64,9 @@ class Console:
         self.song_offset = 0
         self.song_length = 0
 
+        # mode settings
+        self.play_mode = 'loop'   # 'random', 'loop', and None
+
         # custom flag for event handler - song has ended its duration
         self.SONG_OVER = pg.USEREVENT+1
         pg.mixer.music.set_endevent(self.SONG_OVER)
@@ -74,9 +79,10 @@ class Console:
         # button sprite group & slider bar setup
         self.buttons = pg.sprite.Group()
         self.setup_button = pg.sprite.GroupSingle()
+        self.setup_button_clicked = False   # work around to prevent first click not always registering (???)
         self._group_btns()
         self._init_bars()
-        # see setup for file display ui init - it reqs file list
+        # see setup() for file display ui init - it reqs file list
 
     def setup(self):
         if not self.music_folder:
@@ -85,10 +91,8 @@ class Console:
             self.setup_button.draw(self.win)
             self.win.blit(self.setup_txt2, ((WIDTH - PAD*2 - self.setup_txt2.get_width()) // 2 + PAD, PAD + self.setup_txt.get_height() + PAD + BSIZE + PAD))
 
-            # get folder if clicked
-            setup_btn = self.setup_button.sprite
-            clicks = pg.mouse.get_pressed()            
-            if clicks[0] and setup_btn.is_clicked(pg.mouse.get_pos()):
+            # get folder - see event_handler in main() and flag in self.handle_misc_clicks()
+            if self.setup_button_clicked:
                 self.music_folder = filedialog.askdirectory( title='Select music folder' )
 
         # do not proceed without proper filepath to music folder
@@ -210,6 +214,10 @@ class Console:
         self.volbar.value_to_pos(self.volume, 100)        
         pg.mixer.music.set_volume(self.volume / 100)        
 
+    def toggle_menu(self, menu_btn):
+        menu_btn.log_click()
+        menu_btn.toggle_activate()
+
     def adjust_volbar(self, click_x):
         self.volume = self.volbar.pos_to_value(click_x, 100)
         pg.mixer.music.set_volume(self.volume / 100)
@@ -231,17 +239,34 @@ class Console:
     def scroll(self, direction):
         self.list_ui.scroll(direction)
 
-    def handle_list_clicks(self, mouse_pos):
+    def handle_misc_clicks(self, mouse_pos):
+
+        # The only way I could discover to avoid first click not always detecting is to
+        # avoid the pesky pg.mouse.get_pressed() - get mouse event from queue instead
+        if self.setup_mode:
+            setup_btn = self.setup_button.sprite
+            if setup_btn.is_clicked(mouse_pos):
+                self.setup_button_clicked = True
+
         # This runs a check if a collision occurs, signals a change and new index on click
         # actual click handling is managed by self._heed_list_signal()
-        self.list_ui.refresh_list_click_detection(mouse_pos)
+        else:
+            self.list_ui.change_index_click_detection(mouse_pos)        
 
     def song_over(self):
         # don't cycle if the song was stopped by the user
         stop_btn = self._get_button('stop')
         if not stop_btn.is_active:
+
             self.song_in_progress = False
-            self._load_song('next')
+
+            # load song with the correct play mode
+            if self.play_mode == 'loop':
+                self._load_song('loop')
+            elif self.play_mode == 'random':
+                self._load_song('random')
+            else: self._load_song('next')
+
             play_btn = self._get_button('play')
             self.play(play_btn)
 
@@ -301,8 +326,7 @@ class Console:
             return position
 
     def _load_song(self, selection='pass'):
-        if selection == 'random':
-            self.now_playing_index = randrange(0, len(self.song_paths))
+        same_index = self.now_playing_index
 
         if selection == 'prev' and self.now_playing_index - 1 >= 0:
             self.now_playing_index -= 1
@@ -315,6 +339,13 @@ class Console:
 
         if selection == 'list':
             self.now_playing_index = self.list_ui.change_index
+
+        if selection == 'random' and selection != 'list':
+            # overwrite previous index with random if in random mode
+            self.now_playing_index = randrange(0, len(self.song_paths))
+
+        if selection == 'loop' and selection != 'list':
+            self.now_playing_index = same_index
 
         if selection != 'pass':
             self.song_offset = 0
@@ -361,7 +392,7 @@ class Console:
             HoldButton('volup', WIDTH - ROWPAD - BSIZE - ROWSLOT, ROW2_Y, self.volumize),
             SeekButton('rew', ROWPAD + ROWSLOT, ROW1_Y),             
             MuteButton('mute', WIDTH - ROWPAD - BSIZE, ROW2_Y, self.volume),            
-            # Button('menu', ROWPAD, ROW2_Y),
+            ToggleButton('menu', ROWPAD, ROW2_Y),
             ToggleButton('power', (WIDTH - BSIZE) // 2, ROW3_Y),  
         )
 
@@ -376,9 +407,13 @@ class Console:
 
     def _init_ui(self):
         # init file display ui
-        self.list_ui = ListUI(self.win, PAD//2, 2*PAD + 9, WIDTH - PAD, UI_HEIGHT, self.song_paths, self.now_playing_index)   
+        self.list_ui = ListUI(self.win, PAD//2, 2*PAD + 10, WIDTH - PAD, UI_HEIGHT, self.song_paths, self.now_playing_index)   
         # Now Playing infobar
         self.now_playing = NowPlaying(self.win, PAD//2, 2, WIDTH - PAD, 70, self.song_paths, self.now_playing_index)
+
+    def _draw_menu(self, menu_btn):
+        menu_rect = pg.Rect(BPAD, ROW3_Y, (WIDTH - BSIZE) // 2 - 2*BPAD, BSIZE)
+        pg.draw.rect(self.win, 'white', menu_rect, 1)
 
     ## RUN CONSOLE
     ##
@@ -406,5 +441,10 @@ class Console:
                 # infobar
                 self.now_playing.update(self.now_playing_index)
                 self.now_playing.draw()
+
+                # menu
+                menu_btn = self._get_button('menu')
+                if menu_btn.is_active:
+                    self._draw_menu(menu_btn)
             else: 
                 self.setup()
