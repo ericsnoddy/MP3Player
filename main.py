@@ -12,7 +12,7 @@ def main():
 
     # init
     win, clock = init_pygame()
-    console = Console(win)  # will pass argv 
+    console = Console(win)  # will pass args
 
     # program loop
     running = True
@@ -47,6 +47,9 @@ def event_handler(console, event):
             if btn.label == 'power':
                 console.power_down()
 
+            if btn.label == 'menu' and btn.can_click:
+                console.toggle_menu(btn)
+
             if btn.label == 'mute' and btn.can_click:
                 console.mute(btn)
 
@@ -80,9 +83,8 @@ def event_handler(console, event):
         if event.button == 4: console.scroll('up')
         if event.button == 5: console.scroll('down')
 
-        # handle list clicks
-        if event.button == 1 and not console.setup_mode: 
-            console.handle_list_clicks(event.pos)
+        # handle list and setup clicks
+        if event.button == 1: console.handle_misc_clicks(event.pos)
 
     if event.type == MOUSEBUTTONUP:
 
@@ -112,7 +114,7 @@ def init_pygame():
 
     # init display module and caption
     win = pg.display.set_mode((WIDTH, HEIGHT))
-    pg.display.set_caption('Thinamp')
+    pg.display.set_caption('LoseAmp')
 
     # init clock module for capping the framerate
     clock = pg.time.Clock()

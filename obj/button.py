@@ -29,6 +29,13 @@ class ToggleButton(pg.sprite.Sprite):
     def activate(self, activate = True):
         self.is_active = activate
 
+    def toggle_activate(self):
+        # convenience method for when activation status is unknown
+        if self.is_active:
+            self.is_active = False
+        else:
+            self.is_active = True
+
     def _cooldown(self):
         current_time = pg.time.get_ticks()
 
@@ -44,6 +51,9 @@ class ToggleButton(pg.sprite.Sprite):
         self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
         self._cooldown()
 
+
+
+
 class HoldButton(ToggleButton):
     def __init__(self, label, x, y, do_while_hold_click_func):
         super().__init__(label, x, y)
@@ -58,6 +68,9 @@ class HoldButton(ToggleButton):
         else:
             self.image = self.inactive_image
         self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
+
+
+
 
 class MuteButton(ToggleButton):
     def __init__(self, label, x, y, volume):
@@ -77,11 +90,17 @@ class MuteButton(ToggleButton):
             self.is_active = True
             return 0
 
+
+
+
 class StopButton(ToggleButton):
     def __init__(self, label, x, y):
         super().__init__(label, x, y)
 
         self.is_active = True
+
+
+
 
 class QuickButton(ToggleButton):
     def __init__(self, label, x, y):
@@ -97,6 +116,9 @@ class QuickButton(ToggleButton):
            
         self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
         self._cooldown()
+
+
+
 
 class SeekButton(QuickButton):
     def __init__(self, label, x, y):
