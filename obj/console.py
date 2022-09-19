@@ -8,7 +8,7 @@ from random import randrange
 
 from obj.slider import Slider
 from obj.display import ListUI, NowPlaying
-from obj.button import ToggleButton, QuickButton, HoldButton, MuteButton, StopButton, SeekButton
+from obj.button import ToggleButton, QuickButton, HoldButton, MuteButton, ModeButton, StopButton, SeekButton
 from obj.data import BG_DEFAULT, FONT_TYPE_REG, FONT_TYPE_BOLD
 from obj.settings import (
     WIDTH, 
@@ -22,8 +22,6 @@ from obj.settings import (
     ROW2_Y,
     ROW3_Y,
     UI_HEIGHT,
-    MENU_W,
-    MENU_H,
     FONT_COLOR, 
     VOL_START,
     SEEK_INCR,
@@ -65,7 +63,7 @@ class Console:
         self.song_length = 0
 
         # mode settings
-        self.play_mode = 'loop'   # 'random', 'loop', and None
+        self.play_mode = 'loop'   # 'reg' -> 'loop' -> 'rand' -> 'reg' ...
 
         # custom flag for event handler - song has ended its duration
         self.SONG_OVER = pg.USEREVENT+1
@@ -214,9 +212,9 @@ class Console:
         self.volbar.value_to_pos(self.volume, 100)        
         pg.mixer.music.set_volume(self.volume / 100)        
 
-    def toggle_menu(self, menu_btn):
-        menu_btn.log_click()
-        menu_btn.toggle_activate()
+    def toggle_mode(self, mode_btn):
+        mode_btn.log_click()
+        self.play_mode = mode_btn.toggle_mode()
 
     def adjust_volbar(self, click_x):
         self.volume = self.volbar.pos_to_value(click_x, 100)
@@ -259,14 +257,7 @@ class Console:
         if not stop_btn.is_active:
 
             self.song_in_progress = False
-
-            # load song with the correct play mode
-            if self.play_mode == 'loop':
-                self._load_song('loop')
-            elif self.play_mode == 'random':
-                self._load_song('random')
-            else: self._load_song('next')
-
+            self._load_song('auto next')
             play_btn = self._get_button('play')
             self.play(play_btn)
 
@@ -325,27 +316,37 @@ class Console:
         else:
             return position
 
+
+    # WHOLE SECTION NEEDS LOGIC REWORKED- 'next', 'auto next', 'prev', 'loop', 'reg', 'rand'
     def _load_song(self, selection='pass'):
-        same_index = self.now_playing_index
 
         if selection == 'prev' and self.now_playing_index - 1 >= 0:
-            self.now_playing_index -= 1
+            if self.play_mode == 'reg':
+                self.now_playing_index -= 1
+            elif self.play_mode == 'rand':
+                self.now_playing_index = randrange(0, len(self.song_paths))
+            else:
+                # do not update self.now_playing_index
+                pass
 
-        if selection == 'next' and self.now_playing_index + 1 < len(self.song_paths):
-            self.now_playing_index += 1
-        elif selection == 'next':
-            # do not restart the track
-            selection = 'pass'
+        if selection == 'next' or selection == 'auto next':
+            if self.now_playing_index + 1 < len(self.song_paths):
+                if self.play_mode == 'reg':             
+                    self.now_playing_index += 1
+                
+                elif self.play_mode == 'loop':
+                    if selection == 'next':
+                        self.now_playing_index += 1
+                    # do not update the index
+                    pass                        
+            else:
+                # last index reached; do not restart the track if 'next'
+                selection = 'pass'
 
         if selection == 'list':
             self.now_playing_index = self.list_ui.change_index
 
-        if selection == 'random' and selection != 'list':
-            # overwrite previous index with random if in random mode
-            self.now_playing_index = randrange(0, len(self.song_paths))
-
-        if selection == 'loop' and selection != 'list':
-            self.now_playing_index = same_index
+        print(selection, self.play_mode, self.now_playing_index)
 
         if selection != 'pass':
             self.song_offset = 0
@@ -378,7 +379,7 @@ class Console:
         # add setup icon to GroupSingle sprite group
         centeringx = (WIDTH - PAD*2 - BSIZE) // 2 + PAD
         centeringy = PAD + self.setup_txt.get_height() + PAD
-        self.setup_button.add(ToggleButton('menu', centeringx, centeringy))  
+        self.setup_button.add(ToggleButton('menu', centeringx, centeringy))
 
         # add buttons to sprite group - passed functions do not include ()
         self.buttons.add(            
@@ -392,7 +393,7 @@ class Console:
             HoldButton('volup', WIDTH - ROWPAD - BSIZE - ROWSLOT, ROW2_Y, self.volumize),
             SeekButton('rew', ROWPAD + ROWSLOT, ROW1_Y),             
             MuteButton('mute', WIDTH - ROWPAD - BSIZE, ROW2_Y, self.volume),            
-            ToggleButton('menu', ROWPAD, ROW2_Y),
+            ModeButton('mode', ROWPAD, ROW2_Y, self.play_mode),
             ToggleButton('power', (WIDTH - BSIZE) // 2, ROW3_Y),  
         )
 
@@ -442,9 +443,5 @@ class Console:
                 self.now_playing.update(self.now_playing_index)
                 self.now_playing.draw()
 
-                # menu
-                menu_btn = self._get_button('menu')
-                if menu_btn.is_active:
-                    self._draw_menu(menu_btn)
             else: 
                 self.setup()
