@@ -31,7 +31,7 @@ from obj.settings import (
 from obj.debug import debug
 
 class Console:
-    def __init__(self, win):
+    def __init__(self, win, args):
 
         # if the console stops running, main() will quit
         self.running = True
@@ -63,7 +63,8 @@ class Console:
         self.song_length = 0
 
         # mode settings
-        self.play_mode = 'loop'   # 'reg' -> 'loop' -> 'rand' -> 'reg' ...
+        # # 'reg' -> 'loop' -> 'rand' -> 'reg' ...
+        self.play_mode = 'loop'   
 
         # custom flag for event handler - song has ended its duration
         self.SONG_OVER = pg.USEREVENT+1
@@ -275,6 +276,9 @@ class Console:
 
     ## PRIVATE METHODS
     ##
+    def _parse_argv(self, args):
+        pass
+
     def _get_formatted_duration(self):
 
         position = round(self._get_position(self.song_offset), 2)
@@ -316,8 +320,6 @@ class Console:
         else:
             return position
 
-
-    # WHOLE SECTION NEEDS LOGIC REWORKED- 'next', 'auto next', 'prev', 'loop', 'reg', 'rand'
     def _load_song(self, selection='pass'):
 
         # LOAD LOGIC
