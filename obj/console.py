@@ -320,33 +320,42 @@ class Console:
     # WHOLE SECTION NEEDS LOGIC REWORKED- 'next', 'auto next', 'prev', 'loop', 'reg', 'rand'
     def _load_song(self, selection='pass'):
 
-        if selection == 'prev' and self.now_playing_index - 1 >= 0:
-            if self.play_mode == 'reg':
-                self.now_playing_index -= 1
-            elif self.play_mode == 'rand':
-                self.now_playing_index = randrange(0, len(self.song_paths))
-            else:
-                # do not update self.now_playing_index
-                pass
+        # LOAD LOGIC
+        # Regular mode: 'prev' and 'next' and 'auto next' increment index by 1
+        # Rand mode: 'prev and 'next' and 'auto next' generate random index
+        # Loop mode: 'prev' and 'next' increment index by 1 but 'auto next' restarts same index
+        # Any mode: 'list' loads the list-changed index
 
-        if selection == 'next' or selection == 'auto next':
-            if self.now_playing_index + 1 < len(self.song_paths):
-                if self.play_mode == 'reg':             
-                    self.now_playing_index += 1
-                
+        if self.play_mode == 'reg' or self.play_mode == 'loop':
+            same_index = self.now_playing_index
+
+            if selection == 'prev' and self.now_playing_index - 1 >= 0:
+                self.now_playing_index -= 1
+            elif selection == 'prev':
+                # restart 0 index track if 0 index track playing + 'prev'
+                self.now_playing_index = 0
+
+            if selection == 'next' and self.now_playing_index + 1 < len(self.song_paths):
+                self.now_playing_index += 1
+            elif selection == 'next':
+                # do nothing if index is out of range, ie, the last song in the track
+                selection == 'pass'
+
+            if selection == 'auto next':
+                if self.play_mode == 'reg':
+                    self._load_song('next')
                 elif self.play_mode == 'loop':
-                    if selection == 'next':
-                        self.now_playing_index += 1
-                    # do not update the index
-                    pass                        
-            else:
-                # last index reached; do not restart the track if 'next'
-                selection = 'pass'
+                    # play same index
+                    self.now_playing_index = same_index
+
+        if self.play_mode == 'rand':
+
+            if selection == 'prev' or selection == 'next' or selection == 'auto next':
+                self.now_playing_index = randrange(0, len(self.song_paths))
 
         if selection == 'list':
+            # overwrite any index change thus far
             self.now_playing_index = self.list_ui.change_index
-
-        print(selection, self.play_mode, self.now_playing_index)
 
         if selection != 'pass':
             self.song_offset = 0
