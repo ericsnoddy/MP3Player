@@ -6,13 +6,11 @@ from obj.settings import WIDTH, HEIGHT, FPS
 from obj.console import Console
 
 def main():
-    
-    # gather and parse command-line arguments
-    # args = parse_args(sys.argv)
 
     # init
     win, clock = init_pygame()
-    console = Console(win)  # will pass args
+    # pass display and commadn line args
+    console = Console(win, sys.argv)
 
     # program loop
     running = True
