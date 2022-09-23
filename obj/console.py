@@ -23,6 +23,7 @@ from obj.settings import (
     ROW3_Y,
     UI_HEIGHT,
     FONT_COLOR, 
+    BAR_BORDER_COLOR,
     VOL_START,
     SEEK_INCR,
     OPEN_RANDOM_MODE,
@@ -31,7 +32,7 @@ from obj.settings import (
 from obj.debug import debug
 
 class Console:
-    def __init__(self, win, args):
+    def __init__(self, win, play_mode):
 
         # if the console stops running, main() will quit
         self.running = True
@@ -64,7 +65,8 @@ class Console:
 
         # mode settings
         # # 'reg' -> 'loop' -> 'rand' -> 'reg' ...
-        self.play_mode = 'loop'   
+        # Determined by main.py parsing command line args
+        self.play_mode = play_mode
 
         # custom flag for event handler - song has ended its duration
         self.SONG_OVER = pg.USEREVENT+1
@@ -82,7 +84,7 @@ class Console:
         self._group_btns()
         self._init_bars()
         # see setup() for file display ui init - it reqs file list
-
+        
     def setup(self):
         if not self.music_folder:
             # display setup text and button
@@ -98,8 +100,6 @@ class Console:
         elif not self.song_paths:
             for root, _, files in walk(self.music_folder):
                 for filename in files:
-                    # Creates 2 lists that are index-synced: one for full filepath, 
-                    # and one for file filenames; so I don't have to deal with slicing later
                     if filename.endswith('.mp3'):                    
                         self.song_paths.append(join(root, filename))
 
@@ -262,6 +262,9 @@ class Console:
             play_btn = self._get_button('play')
             self.play(play_btn)
 
+    def power_menu(self):
+        pass
+
     def power_down(self):
         self.win.blit(self.bg, (0,0))
         self.win.blit(self.goodbye_txt, 
@@ -276,9 +279,6 @@ class Console:
 
     ## PRIVATE METHODS
     ##
-    def _parse_argv(self, args):
-        pass
-
     def _get_formatted_duration(self):
 
         position = round(self._get_position(self.song_offset), 2)
@@ -425,7 +425,7 @@ class Console:
 
     def _draw_menu(self, menu_btn):
         menu_rect = pg.Rect(BPAD, ROW3_Y, (WIDTH - BSIZE) // 2 - 2*BPAD, BSIZE)
-        pg.draw.rect(self.win, 'white', menu_rect, 1)
+        pg.draw.rect(self.win, BAR_BORDER_COLOR, menu_rect, 1)
 
     ## RUN CONSOLE
     ##
@@ -433,11 +433,14 @@ class Console:
         self.win.blit(self.bg, (0,0))
 
         if self.running:
-            if not self.setup_mode:
-
+            if self.setup_mode:
+                self.setup()
+            else:
+                # button sprites
                 self.buttons.update()
                 self.buttons.draw(self.win)
 
+                # duration display
                 self._display_duration()
 
                 # clickable volume and progress bars
@@ -453,6 +456,3 @@ class Console:
                 # infobar
                 self.now_playing.update(self.now_playing_index)
                 self.now_playing.draw()
-
-            else: 
-                self.setup()

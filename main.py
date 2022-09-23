@@ -1,16 +1,21 @@
 import pygame as pg
-import sys
 from pygame.locals import *
+import sys
+
 
 from obj.settings import WIDTH, HEIGHT, FPS
 from obj.console import Console
 
 def main():
 
+    # parse command-line arguments (for now only used to program play mode as 'rand' or 'loop')
+    play_mode = parse_argv(sys.argv)
+
     # init
-    win, clock = init_pygame()
-    # pass display and commadn line args
-    console = Console(win, sys.argv)
+    win, clock = init_pygame()    
+
+    # pass display and command line args
+    console = Console(win, play_mode)
 
     # program loop
     running = True
@@ -23,12 +28,13 @@ def main():
             if event.type == pg.QUIT or not console.running:
                 running = False
             
-            event_handler(console, event)        
+            # handle input
+            event_handler(console, event)
         
         # update the display
         pg.display.update()
 
-        # tick the clock to maintain FPS
+        # tick the clock; used to cap FPS
         clock.tick(FPS)
 
     pg.quit()
@@ -45,6 +51,7 @@ def event_handler(console, event):
             if btn.label == 'power':
                 console.power_down()
 
+            # btn.can_click is a cooldown timer that disallows click spamming (needed b/c click event is updated ~60x/sec)
             if btn.label == 'mode' and btn.can_click:
                 console.toggle_mode(btn)
 
@@ -93,17 +100,48 @@ def event_handler(console, event):
             if vol.is_active:
                 vol.activate(False)
 
-    # Keyboard shortcuts
+    # keyboard shortcuts
     if event.type == KEYDOWN:
-        if event.key == K_UP: console.scroll('up')
-        if event.key == K_DOWN: console.scroll('down')
+        if event.key == K_UP or event.key == K_PAGEUP: console.scroll('up')
+        if event.key == K_DOWN or event.key == K_PAGEDOWN: console.scroll('down')
 
     # catch custom flag
     if event.type == console.SONG_OVER:
         console.song_over()
 
-# def parse_args(argsv):
-#     return [sys.argv[i] for i in range (1, len(sys.argv))]
+def parse_argv(args):
+
+    error = False
+
+    if len(args) == 2:            
+
+        if '-r' in args or '-R' in args:
+            return 'rand'
+
+        elif '-l' in args or '-L' in args:
+            return 'loop'
+
+        elif '-?' in args:
+            error = 2
+            
+        else:
+            error = 1
+    
+    elif len(args) > 2 and '-?' not in args:
+        error = 1
+    elif '-?' in args: 
+        error = 2
+
+    if error == 1:
+        print("Invalid command-line argument. '-?' for help.")
+    elif error == 2:
+        print("-R or -r for random mode XOR -L or -l for loop mode.")
+
+    if error:
+        pg.quit()
+        sys.exit()
+    else:
+        return 'reg'
 
 def init_pygame():
     

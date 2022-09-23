@@ -170,7 +170,8 @@ class ListUI(NowPlaying):
         self.scroll_y = 0
 
         self.now_playing = self.titles[self.now_playing_index]
-        self.list_surf = self._create_list_surface()
+        # create a transparent surface the size of our display (minus padding) and size of library
+        self.list_surf = pg.Surface((self.rect.width - 4, len(self.titles) * LIST_ROW_HEIGHT), pg.SRCALPHA)
 
         # click cooldown
         self.can_click = False
@@ -180,11 +181,6 @@ class ListUI(NowPlaying):
         # need a way to signal console to change songs on list click
         self.change_signal = False
         self.change_index = self.now_playing_index
-
-    def _create_list_surface(self):
-        list_w = self.rect.width - 4
-        list_h = len(self.titles) * LIST_ROW_HEIGHT
-        return pg.Surface((list_w, list_h), pg.SRCALPHA)
 
     def _enumerate_list(self):
 
@@ -213,7 +209,6 @@ class ListUI(NowPlaying):
         elif direction == 'down':
             self.scroll_y = max(self.scroll_y - 48, -(self.list_surf.get_height()) + 12)
 
-    # scroll to the relevant song
     def change_index_click_detection(self, mouse_pos):
         if self.rect.collidepoint(mouse_pos) and self.can_click:
             self._log_click()
@@ -226,12 +221,12 @@ class ListUI(NowPlaying):
             if self.now_playing_index != row_index:
                 self.change_signal = True
                 self.change_index = row_index
-
-    ## PRIVATE METHODS
-    ##
+    
     def scrolly_from_index(self, index):
         self.scroll_y = 0
 
+    ## PRIVATE METHODS
+    ##  
     def _log_click(self):
         self.click_time = pg.time.get_ticks()
         self.can_click = False
@@ -243,6 +238,8 @@ class ListUI(NowPlaying):
             if current_time - self.click_time >= self.click_cooldown:
                 self.can_click = True
 
+    ## CONTINUOUS METHODS
+    ##
     def update(self, new_index):
         if self.now_playing_index != new_index:
             self.now_playing_index = new_index
