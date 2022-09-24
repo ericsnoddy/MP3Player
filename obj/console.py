@@ -112,13 +112,12 @@ class Console:
 
             # load first track and end setup mode
             if OPEN_RANDOM_MODE:
-                self.now_playing_index = randrange(0, len(self.song_paths))       
+                self.now_playing_index = randrange(0, len(self.song_paths))
+            else:
+                self.now_playing_index = 0
             pg.mixer.music.load(self.song_paths[self.now_playing_index])
             self._log_song_length()
             self.setup_mode = False
-
-            # remove events from the queue; this is to prevent undesirable click detection before list is loaded
-            pg.event.clear()
 
     def mute(self, mute_btn):
         mute_btn.log_click()
@@ -235,8 +234,8 @@ class Console:
             rew_btn = self._get_button('rew')
             self.seek(rew_btn, incr=(current_position - new_position))
 
-    def scroll(self, direction):
-        self.list_ui.scroll(direction)
+    def scroll(self, direction, page=False):
+        self.list_ui.scroll(direction, page)
 
     def handle_misc_clicks(self, mouse_pos):
 
@@ -363,7 +362,8 @@ class Console:
             self.song_offset = 0
             try:    # make sure file is not corrupt/unreadable, else go to next song
                 pg.mixer.music.load(self.song_paths[self.now_playing_index])
-                self._log_song_length() 
+                self._log_song_length()
+
             except:
                 next_btn = self._get_button('next')
                 self.skip(next_btn)                 

@@ -102,8 +102,10 @@ def event_handler(console, event):
 
     # keyboard shortcuts
     if event.type == KEYDOWN:
-        if event.key == K_UP or event.key == K_PAGEUP: console.scroll('up')
-        if event.key == K_DOWN or event.key == K_PAGEDOWN: console.scroll('down')
+        if event.key == K_UP: console.scroll('up')
+        elif event.key == K_PAGEUP: console.scroll('up', page=True)
+        elif event.key == K_DOWN: console.scroll('down')
+        elif event.key == K_PAGEDOWN: console.scroll('down', page=True)
 
     # catch custom flag
     if event.type == console.SONG_OVER:
@@ -111,6 +113,8 @@ def event_handler(console, event):
 
 def parse_argv(args):
 
+    # command line args can be used to set the play mode
+    # error 2 means user called -? for help; error 1 means syntax error (eg, both -L and -R called)
     error = False
 
     if len(args) == 2:            
@@ -148,7 +152,7 @@ def init_pygame():
     # initialize all pg modules
     pg.init()
 
-    # init display module and caption
+    # init display and caption
     win = pg.display.set_mode((WIDTH, HEIGHT))
     pg.display.set_caption('TinyAmp')
 
