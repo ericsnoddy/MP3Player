@@ -21,15 +21,6 @@ from obj.settings import (
 from obj.data import FONT_TYPE_REG, FONT_TYPE_BOLD
 from obj.debug import debug
 
-'''
-Okay we really need to think about this. How are we going to build a list of songs combined with metadata
-if it exists per file. Do we only extract metadata at the point of blitting? Or do we build a list with
-metadata included.
-
-1st try metadata extraction;
-if no metadata, blit the filename and unknowns
-'''
-
 class NowPlaying:
     def __init__(self, win, x, y, w, h, song_paths, now_playing_index):
 
@@ -197,17 +188,23 @@ class ListUI(NowPlaying):
 
             row = f'{artist} - {song}'
 
-            if self.now_playing_index != self.titles.index(title):
+            if self.now_playing_index != index:
                 self.list_surf.blit(f.render(row, True, LIST_FONT_COLOR), (0, y))
             else: 
                 self.list_surf.blit(f_.render(row, True, FONT_COLOR), (0, y))
             y += LIST_FONTSIZE + 2  # font is rendered with 1 px padding
 
-    def scroll(self, direction):
+    def scroll(self, direction, page=False):
         if direction == 'up': 
-            self.scroll_y = min(self.scroll_y + 48, 0)
+            if page:
+                self.scroll_y = min(self.scroll_y + 288, 0)
+            else:
+                self.scroll_y = min(self.scroll_y + 48, 0)
         elif direction == 'down':
-            self.scroll_y = max(self.scroll_y - 48, -(self.list_surf.get_height()) + 12)
+            if page:
+                self.scroll_y = max(self.scroll_y - 288, -(self.list_surf.get_height()) + 12)
+            else:
+                self.scroll_y = max(self.scroll_y - 48, -(self.list_surf.get_height()) + 12)
 
     def change_index_click_detection(self, mouse_pos):
         if self.rect.collidepoint(mouse_pos) and self.can_click:
@@ -251,6 +248,6 @@ class ListUI(NowPlaying):
         pg.draw.rect(self.win, LIST_BORDER_COLOR, self.rect, 1)
         self.win_sub.blit(self.list_surf, (4, self.scroll_y))
 
-        # debug([
-        #     f'{self.now_playing_index} - {self.scroll_y}'
-        # ])
+        debug([
+            f'{self.now_playing_index} - {self.scroll_y}'
+        ])
