@@ -179,6 +179,7 @@ class ModeButton(pg.sprite.Sprite):
     
     def _init_mode(self):
         
+        # Here indices are assigned, preferring a List over a Dict to toggle through. 
         match self.play_mode:
             case 'reg':
                 return 0
