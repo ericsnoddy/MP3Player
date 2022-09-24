@@ -182,7 +182,7 @@ class ListUI(NowPlaying):
         self.list_surf.fill((0))
 
         y = 1   # 1 px padding
-        for index, title in enumerate(self.titles):
+        for index, _ in enumerate(self.titles):
             artist = self.get_meta('artist', index)
             song = self.get_meta('title', index)
 
