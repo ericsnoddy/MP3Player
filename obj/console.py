@@ -115,8 +115,13 @@ class Console:
                 self.now_playing_index = randrange(0, len(self.song_paths))
             else:
                 self.now_playing_index = 0
+
             pg.mixer.music.load(self.song_paths[self.now_playing_index])
-            self._log_song_length()
+
+            # scrolls the list to the current selected song
+            self.list_ui.scrolly_from_index(self.now_playing_index)
+
+            self._log_song_length()            
             self.setup_mode = False
 
     def mute(self, mute_btn):
@@ -364,6 +369,8 @@ class Console:
                 pg.mixer.music.load(self.song_paths[self.now_playing_index])
                 self._log_song_length()
 
+                # scroll list to the currently selected song if row not visible
+                self.list_ui.scrolly_from_index(self.now_playing_index)
             except:
                 next_btn = self._get_button('next')
                 self.skip(next_btn)                 

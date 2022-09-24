@@ -220,7 +220,10 @@ class ListUI(NowPlaying):
                 self.change_index = row_index
     
     def scrolly_from_index(self, index):
-        self.scroll_y = 0
+        min_index = -(self.scroll_y) // LIST_ROW_HEIGHT
+        max_index = min_index + 27  # There are 28 rows visible
+        if index < min_index or index > max_index:
+            self.scroll_y = -(LIST_ROW_HEIGHT * index)
 
     ## PRIVATE METHODS
     ##  
