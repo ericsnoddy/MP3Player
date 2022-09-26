@@ -1,9 +1,10 @@
-from sqlite3 import Row
+# third party
 import pygame as pg
 from pygame.locals import *
 from mutagen.easyid3 import EasyID3 # for extracting metadata
 from mutagen.mp3 import MP3
 
+# local
 from obj.settings import (
     FONT_COLOR,
     FONT_COLOR_TITLE,
@@ -97,7 +98,12 @@ class NowPlaying:
         return song_titles
 
     def _get_scaled_text(self, old_text_width, font_type, font_color, text):
-        new_font_size = int(((self.rect.width - 4) / old_text_width) * NP_FONTSIZE_TITLE)
+
+        if text == self.song: fontsize = NP_FONTSIZE_TITLE
+        elif text == self.artist: fontsize = NP_FONTSIZE_ARTIST
+        else: fontsize = NP_FONTSIZE_ALBUM
+
+        new_font_size = int(((self.rect.width - 4) / old_text_width) * fontsize)
         new_font = pg.font.Font(font_type, new_font_size)
         meta_text = new_font.render(text, True, font_color)
         width = meta_text.get_width()
@@ -258,7 +264,3 @@ class ListUI(NowPlaying):
     def draw(self):
         pg.draw.rect(self.win, LIST_BORDER_COLOR, self.rect, 1)
         self.win_sub.blit(self.list_surf, (4, self.scroll_y))
-
-        debug([
-            f'{self.now_playing_index} - {self.scroll_y}'
-        ])
