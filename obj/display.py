@@ -195,16 +195,20 @@ class ListUI(NowPlaying):
             y += LIST_FONTSIZE + 2  # font is rendered with 1 px padding
 
     def scroll(self, direction, page=False):
+        
+        mouse_scroll = LIST_ROW_HEIGHT * 4
+        page_scroll = mouse_scroll * 6
+
         if direction == 'up': 
             if page:
-                self.scroll_y = min(self.scroll_y + 288, 0)
+                self.scroll_y = min(self.scroll_y + page_scroll, 0)
             else:
-                self.scroll_y = min(self.scroll_y + 48, 0)
+                self.scroll_y = min(self.scroll_y + mouse_scroll, 0)
         elif direction == 'down':
             if page:
-                self.scroll_y = max(self.scroll_y - 288, -(self.list_surf.get_height()) + 12)
+                self.scroll_y = max(self.scroll_y - page_scroll, -(self.list_surf.get_height()) + LIST_ROW_HEIGHT)
             else:
-                self.scroll_y = max(self.scroll_y - 48, -(self.list_surf.get_height()) + 12)
+                self.scroll_y = max(self.scroll_y - mouse_scroll, -(self.list_surf.get_height()) + LIST_ROW_HEIGHT)
 
     def change_index_click_detection(self, mouse_pos):
         if self.rect.collidepoint(mouse_pos) and self.can_click:
@@ -220,6 +224,7 @@ class ListUI(NowPlaying):
                 self.change_index = row_index
     
     def scrolly_from_index(self, index):
+        # scrolls list if input index is not in visible range
         min_index = -(self.scroll_y) // LIST_ROW_HEIGHT
         max_index = min_index + 27  # There are 28 rows visible
         if index < min_index or index > max_index:
@@ -237,6 +242,9 @@ class ListUI(NowPlaying):
         if not self.can_click:
             if current_time - self.click_time >= self.click_cooldown:
                 self.can_click = True
+
+    def _highlight_playing(self):
+        pass
 
     ## CONTINUOUS METHODS
     ##
