@@ -6,7 +6,7 @@ from random import randrange
 # third party
 import pygame as pg
 from pygame.locals import *
-from tkinter import filedialog
+from tkinter import filedialog as fd    # pip install tk
 
 # local
 from obj.slider import Slider
@@ -97,7 +97,7 @@ class Console:
 
             # get folder - see event_handler in main() and flag in self.handle_misc_clicks()
             if self.setup_button_clicked:
-                self.music_folder = filedialog.askdirectory( title='Select folder; first option is default', initialdir='public_domain_mp3' )
+                self.music_folder = fd.askdirectory( title='Select folder; first option is default', initialdir='public_domain_mp3' )
 
         # do not proceed without proper filepath to music folder
         elif not self.song_paths:
