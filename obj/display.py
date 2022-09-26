@@ -192,10 +192,10 @@ class ListUI(NowPlaying):
                 self.list_surf.blit(f.render(row, True, LIST_FONT_COLOR), (0, y))
             else: 
                 self.list_surf.blit(f_.render(row, True, FONT_COLOR), (0, y))
-            y += LIST_FONTSIZE + 2  # font is rendered with 1 px padding
+            y += LIST_ROW_HEIGHT  # font is rendered with 1 px padding
 
     def scroll(self, direction, page=False):
-        
+
         mouse_scroll = LIST_ROW_HEIGHT * 4
         page_scroll = mouse_scroll * 6
 
