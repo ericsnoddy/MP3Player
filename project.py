@@ -1,8 +1,11 @@
-import pygame as pg
-from pygame.locals import *
+# standard library
 import sys
 
+# third party
+import pygame as pg
+from pygame.locals import *
 
+# local
 from obj.settings import WIDTH, HEIGHT, FPS
 from obj.console import Console
 
