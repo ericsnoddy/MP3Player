@@ -1,5 +1,7 @@
+# third party
 import pygame as pg
 
+# local
 from obj.data import BUTTONS
 
 class ToggleButton(pg.sprite.Sprite):

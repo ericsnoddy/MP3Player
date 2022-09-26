@@ -1,11 +1,14 @@
-import pygame as pg
-from pygame.locals import *
-from tkinter import filedialog
-
+# standard library
 from os import walk
 from os.path import join
 from random import randrange
 
+# third party
+import pygame as pg
+from pygame.locals import *
+from tkinter import filedialog
+
+# local
 from obj.slider import Slider
 from obj.display import ListUI, NowPlaying
 from obj.button import ToggleButton, QuickButton, HoldButton, MuteButton, ModeButton, StopButton, SeekButton
@@ -94,7 +97,7 @@ class Console:
 
             # get folder - see event_handler in main() and flag in self.handle_misc_clicks()
             if self.setup_button_clicked:
-                self.music_folder = filedialog.askdirectory( title='Select music folder' )
+                self.music_folder = filedialog.askdirectory( title='Select folder; first option is default', initialdir='public_domain_mp3' )
 
         # do not proceed without proper filepath to music folder
         elif not self.song_paths:

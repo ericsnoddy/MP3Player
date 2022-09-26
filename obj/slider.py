@@ -1,6 +1,7 @@
+# third party
 import pygame as pg
-from obj.debug import debug
 
+# local
 from obj.settings import BAR_BORDER_COLOR, BAR_COLOR
 
 class Slider:
