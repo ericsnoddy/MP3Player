@@ -433,10 +433,6 @@ class Console:
         # Now Playing infobar
         self.now_playing = NowPlaying(self.win, PAD//2, 2, WIDTH - PAD, 70, self.song_paths, self.now_playing_index)
 
-    def _draw_menu(self, menu_btn):
-        menu_rect = pg.Rect(BPAD, ROW3_Y, (WIDTH - BSIZE) // 2 - 2*BPAD, BSIZE)
-        pg.draw.rect(self.win, BAR_BORDER_COLOR, menu_rect, 1)
-
     ## RUN CONSOLE
     ##
     def run(self):
