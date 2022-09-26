@@ -269,9 +269,6 @@ class Console:
             play_btn = self._get_button('play')
             self.play(play_btn)
 
-    def power_menu(self):
-        pass
-
     def power_down(self):
         self.win.blit(self.bg, (0,0))
         self.win.blit(self.goodbye_txt, 
