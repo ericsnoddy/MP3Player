@@ -37,5 +37,6 @@ class Scroller(Slider):
     def __init__(self, x, y, width, height, initial_value, initial_max):
         super().__init__(x, y, width, height, initial_value, initial_max)
 
-        
+        # This is an unused module that may become a scroll-bar for the list
+        pass
 
