@@ -1,3 +1,70 @@
+"Metal Media Player Buttons" by Miguel Angel 
+free to use with attribution by Vecteezy.com
+
+--------------------
+
+Shuffle and loop icons 
+free to use with attribution to icons8.com
+
+--------------------
+
+Space background created by fraang
+free to use under CC-BY-SA 3.0
+https://creativecommons.org/licenses/by-sa/3.0/
+
+-------------------------------------------
+Sample mp3s from the public domain included
+-------------------------------------------
+
+Pine Top Smith
+Pinetop's Blues
+Written by Clarence Smith (1904-1929)
+Performed by "Pine Top" Smith
+Recording date: 1928
+Cat Number: Brunswick 03600-A
+Duration: 02'55"
+License: Public Domain
+
+Johnny Dodds Trio
+Little Bits
+Written by Jimmy Blythe (1901-1931)
+Performed by Johnny Dodds Trio
+Recording date: 1929
+Cat Number: Hot Jazz Club Of America HC 42
+Duration: 03'07"
+License: Public Domain
+
+Jess Stacy
+In The Dark-Flashes
+Written by Bix Beiderbeck (1903-1931)
+Performed by Jess Stacy
+Recording date: 1935
+Cat Number: PARLOPHONE R 2233
+Duration: 03'17"
+License: Public Domain
+
+Virginia Liston
+I'm Gonna Get Me A Man That's All
+Written by Virginia Liston (1890-1932)
+Performed by Virginia Liston (vocals), unknown (cornet), unknown (banjo), unknown (piano)
+Recording date: Chicago 29 May 1926
+Cat Number: Vocalion 1032
+Duration: 03'04"
+License: Public Domain
+
+The North Carolina Ramblers Group
+Whitehouse Blues
+Written by Charlie Poole (1892-1930)
+Performed by Charlie Poole (vocals, 5 string banjo), Posey Rorer (fiddle), Roy Harvey (guitar)
+Recording date: 20 Sep 1920
+Cat Number: Columbia 15099-D
+Duration: 03'32"
+License: Public Domain
+
+----------------
+Xolonium Font License
+----------------
+
 Copyright 2011-2015 Severin Meyer <sev.ch@web.de>,
 with Reserved Font Name Xolonium.
 
@@ -92,3 +159,6 @@ INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
 DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
+
+
+
