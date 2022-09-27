@@ -18,29 +18,63 @@
 
 Let's explore the program.
 
+##
+
+# imported modules:
+
+# import pygame as pg
+# tk (tkinter)
+# mutagen
+
+pygame is a richly featured third party game-oriented module for manipulating sprites, handling mouse/keyboard 
+inputs, and managing the FPS rate of animation. It uses "surface" and "rectangle" objects to display images and fonts
+at set coordinates, among other tools. tkinter, a popular user dialog module, is used here to retrieve music folder 
+from the user. mutagen is a third party module for manipulating song files; it's needed to extract metadata including 
+song length, as pygame music has limited functionality in this area. (Calculating a song's time position is a real pain 
+that involves tracking how long current sound has been playing and offsets such as rewind and pause length.)
+
 ###
 
 # mp3player/project.py
 
-project.py contains the main method. The main class handles intitialization of the pygame module, which is a third 
-party game-oriented module for manipulating sprites, handling mouse/keyboard inputs, and managing the FPS rate of 
-animation. The main class contains the fundmental structure of the program: it inits the display window, console.py
-Console class, and helper modules; parses command line arguments; and handles input events. The main structure is a 
-program loop that loops console.run() until a quit event is detected. Inside the main program loop is the event loop 
-which handles queued events such as keyboard and mouse button presses.
+project.py contains the main method. main() handles init of the pygame module, parsing command line args, init and 
+running of the Console class obj which contains the bulk of the program, helper modules, and handling all inputs from 
+the keyboard and mouse. The main structure is a program loop that loops console.run() until a quit event is detected. 
+Inside the main program loop is the event loop which handles queued events such as keyboard and mouse button presses.
 
 def init_pygame() inits the display window size and caption, inits the framerate clock, and returns these objs to main.
 
-def parse_argv() detects the play mode from optional command line arguments and passes to the Console.
+def parse_argv() detects the play mode from optional command line arguments and passes the result to Console.
 
 def event_handler() handles inputs. The majority of inputs are mouse click collisions with drawn sprites. Sprites are 
 filtered by label and tested for click collision, and if 'legal' collisions are detected, main() redirects the command 
-to Console. None of the media functions take place in the event_handler() itself. Note most buttons clicks come with a 
-cooldown period; since the program loops ~60 FPS we do not want to allow spamming of mouseclicks, so we must limit 
-their input by timing them.
+to Console. None of the media functions take place in the event_handler() itself. 
+
+Most buttons come with a cooldown period; since the program loops ~60 FPS we do not want to allow spamming of mouse
+clicks, so input is time-limited and checked via an "is_clicked" method and "can_click" attribute. The code for 
+checking sprite collisions is a one-line filter run only if a MOUSEBUTTONDOWN event is detected, shown here with 
+example:
+
+
+
+if event.type == MOUSEBUTTONDOWN:
+    clicked = [btn for btn in console.buttons.sprites() if btn.is_clicked(event.pos)]
+    for btn in clicked:
+        ...
+        if btn.label == 'mode' and btn.can_click:
+            console.toggle_mode(btn))
+        ...
+
+
+
+The relevant button is returned when the mouse click position is checked against each button's is_clicked method. Then
+the filtered button obj is sent to the corresponding method in console.py to perform the intended media function. 
+Default cooldown period derived from the base ToggleButton class is 250ms but some buttons have altered cooldown 
+periods.
 
 At the end of every program loop, the screen is updated and the clock is ticked at a rate which forces the program to
-closely approximate the FPS in settings.py (default is 60 FPS). This is to ensure consistent framerate across devices.
+closely approximate the FPS in settings.py (program default is 60 FPS). This is to ensure consistent framerate across 
+devices.
 
 ###
 
@@ -53,29 +87,72 @@ list UI. Console also handles the main update and draw methods for all the sprit
 and objects, etc. console.run() method is run every program loop (see main.py). Example methods include all the media 
 functions: mute(), play(), skip() etc. All these button-click functions take a button sprite object as an input; these 
 button sprites are specialized classes, some inherited from others, all inheriting from pygame.Sprite. (see button.py)
-The buttons do not handle the media functions themselves, except in rare circumstances as convenience dictated.
+The buttons do not handle the media functions themselves, except in rare circumstances as convenience dictated. 
+
+Many of the media functions in console.py must interact with each other. Since media function methods input only the 
+button intended for the primary function--eg, the stop_btn obj when stop button is activated--I wrote a private method 
+self._get_button(btn) that retrieves the relevent buttons for interacting from within other subclasses. In the method 
+console.stop(stop_btn), eg, we need to deactivate play and pause if those buttons are active at the time the stop 
+button is clicked:
+
+
+
+def _get_button(self, label):
+    btns = []
+    for btn in self.buttons.sprites():
+        if btn.label == label:
+            btns.append(btn)
+    return btns[0]
+
+
+
+Here is an example media function:
+
+
+
+def pause(self, pause_btn):
+
+    # log the click time to begin cooldown period
+    pause_btn.log_click()
+
+    # get the play button obj
+    play_btn = self._get_button('play')
+
+    # global flag for song has been started is True and pygame check for song is playing (not paused) is True
+    if self.song_in_progress and pg.mixer.music.get_busy():
+
+        # if both True, activate the pause button; deactivate the play button; pause the mixer 
+        pause_btn.activate()            
+        play_btn.activate(False)
+        pg.mixer.music.pause()
+
+    # if the song has been started but it's not currently playing it must be paused; unpause the mixer
+    elif self.song_in_progress:
+        pause_btn.activate(False)
+        play_btn.activate()
+        pg.mixer.music.unpause()
+
+    # if a song has not been started do nothing
+
 
 console.py handles song-over events, exiting, metadata extraction (using display.py method), displaying the song 
 duration and length, and heeding a signal to change to song based on list UI clicks. All of the media buttons should 
 behave exactly as traditional for mp3 player programs. Some of the console's public methods are just pass-through
-functions acting as a communication mediary between main.py input handling and obj classes such as slider.py. 
+functions acting as a communication mediary between main.py input handling and obj classes such as slider.py, in 
+order to keep the code clean and readable:
+
+
+
+def scroll(self, direction, page=False):
+    self.list_ui.scroll(direction, page)
+
+
 
 console.py/__init__() sets up many variables and objs from flags to pre-rendered text to sprite groups. It must be
 passed the display window and the play mode from init in main.py. When self.setup_mode is True (program first run),
 the song list is enumerated with file paths from selected root folder, and the list UI and NowPlaying objs are
 initiated with the song file paths. At the end of setup, a song is loaded, highlighted in the list, and ready for play.
 
-Many of the media functions in console.py must interact with each other. For example, when the play button is activated,
-the stop button must deactivate. Since media function methods input only the button intended for the primary function--
-eg, the stop_btn obj when stop button is activated--I wrote a private method self._get_button(btn) that retrieves the
-relevent buttons for interacting from within other subclasses. In the method console.stop(stop_btn), eg, we need to 
-deactivate play and pause if those buttons are active when stop button is clicked:
-
-    play_btn = self._get_button('play')
-    play_btn.activate(False)
-
-    pause_btn = self._get_button('pause')
-    pause_btn.activate(False)
 
 console.run() contains all of the update and draw functions which loop every frame.
 
@@ -99,6 +176,15 @@ ModeButton(pygame.sprite.Sprite) - toggles between 3 states instead of 2 states.
 pygame sprites are objects that have an "image" and a "rectangle" atrribute. a rectangle in pygame is a specific region
 of the screen given by coordinates which can then be "blitted" or drawn onto a "surface".
 
+An example class function, is_clicked(mouse_pos) looks like this, a Pythagorean distance formula using the button 
+radius:
+
+def is_clicked(self, mouse_pos):
+    dx = self.rect.centerx - mouse_pos[0]
+    dy = self.rect.centery - mouse_pos[1]
+    sq = dx**2 + dy**2
+    return True if sq < self.radius**2 else False
+
 ##
 
 # obj/slider.py
@@ -107,6 +193,10 @@ Contains 2 classes:
 
 Slider - an interactive bar showing ratio of current level to max level, tracks mouse clicks to update value
 ----Scroller(Slider) - unused, bare subclass at this time; may become a scroll-bar for the list in the future.
+
+The slider can take a mouse click's x position and turn it into a new value (for adjusting the volume, say), or
+it can in reverse take a value and adjust the slider's x position fill (for restoring the volume from mute, say).
+Another use is the progress bar; a mouse click can change the time position of the currently playing song.
 
 ##
 
@@ -136,6 +226,46 @@ rendered every time a song changes. This causes unacceptable lag with especially
 to code a good workaround for this while maintaining visually highlighting the current playing song as well as updating
 the highlighting when a new song plays. Perhaps I'll figure it out in future versions.
 
+The list is rendered row by row as follows:
+
+
+def _enumerate_list(self):
+
+    ...
+
+    y = 1   # 1 px padding
+    for index, _ in enumerate(self.titles):
+        artist = self.get_meta('artist', index)
+        song = self.get_meta('title', index)
+
+        row = f'{artist} - {song}'
+
+        if self.now_playing_index != index:
+
+            # if the song changes, re-render which song is displayed with highlight text
+            # blit is the method for drawing image rectangles onto surfaces
+            self.list_surf.blit(f.render(row, True, LIST_FONT_COLOR), (0, y))
+        else: 
+            self.list_surf.blit(f_.render(row, True, FONT_COLOR), (0, y))
+        y += LIST_ROW_HEIGHT 
+
+
+Another function calculates the index based on mouseclick collisions with the list surface for changing the song via 
+the clickable/scrollable list:
+
+
+ def change_index_click_detection(self, mouse_pos):
+
+    # pygame function to detect rect collisions
+    if self.rect.collidepoint(mouse_pos) and self.can_click:
+    
+        self._log_click()
+        mouse_y = mouse_pos[1]
+
+        # Derive the index of the song by tracking the y position and its offset and dividing by the row height
+        row_index = (mouse_y - (self.rect.top + 1) - self.scroll_y) // LIST_ROW_HEIGHT
+
+
 ## 
 
 # obj/__init__.py
@@ -164,18 +294,6 @@ This is not a necessary folder and contains only sample public domain music for 
 program default folder suggestion in this cs50 version of the program but any folder containing mp3s or subfolders
 of mp3s can be opted.
 
-##
-
-# imported modules:
-
-# import pygame as pg
-# tk (tkinter)
-# mutagen
-
-pygame is described above. tkinter, a popular user dialog module, is used only to retrieve music folder from the user.
-mutagen is a third party module for manipulating song files; needed to extract metadata including song length, as
-pygame music has limited functionality in this area. (Calculating song's time position is a real pain that 
-involves tracking how long current sound has been playing with offsets such as rewinding and pausing.)
 
 
 
