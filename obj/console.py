@@ -41,6 +41,7 @@ class Console:
         self.win = win
 
         # audio init - set_volume takes a float between 0 and 1; I divide a volume value by 100 for a convenient standard
+        pg.mixer.init()
         self.volume = VOL_START
         pg.mixer.music.set_volume(self.volume / 100)
 
@@ -477,7 +478,7 @@ class Console:
         self.progbar = Slider(BSIZE + BPAD, ROW1_Y - BSIZE + 2*BPAD, WIDTH - 2*(BSIZE + BPAD), BPAD - 1, self._get_position(self.song_offset), self.song_length)
 
     def _init_ui(self):
-        
+
         # init file display ui - reqs the song filepaths and the currently selected song (index)
         self.list_ui = ListUI(self.win, PAD//2, 2*PAD + 10, WIDTH - PAD, UI_HEIGHT, self.song_paths, self.now_playing_index)   
         # Now Playing infobar

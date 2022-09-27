@@ -40,6 +40,7 @@ def main():
         # tick the clock; used to cap FPS
         clock.tick(FPS)
 
+    pg.mixer.quit()
     pg.quit()
     sys.exit()
 
