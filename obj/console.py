@@ -26,13 +26,10 @@ from obj.settings import (
     ROW3_Y,
     UI_HEIGHT,
     FONT_COLOR, 
-    BAR_BORDER_COLOR,
     VOL_START,
     SEEK_INCR,
     OPEN_RANDOM_MODE,
 )
-
-from obj.debug import debug
 
 class Console:
     def __init__(self, win, play_mode):
@@ -43,7 +40,7 @@ class Console:
         # get the display surface
         self.win = win
 
-        # audio
+        # audio init - set_volume takes a float between 0 and 1; I divide a volume value by 100 for a convenient standard
         self.volume = VOL_START
         pg.mixer.music.set_volume(self.volume / 100)
 
@@ -63,7 +60,7 @@ class Console:
         # console player flags
         self.song_in_progress = False
         self.now_playing_index = 0
-        self.song_offset = 0
+        self.song_offset = 0    # tracks the time duration of playing song minus pause time and rew/ff
         self.song_length = 0
 
         # mode settings
@@ -130,13 +127,16 @@ class Console:
     def mute(self, mute_btn):
         mute_btn.log_click()
 
-        # toggle button, adjust volume bar, adjust volume
+        # toggle button, adjust volume bar, adjust volume; toggle_mute returns 0 or saved volume (int out of 100)
         self.volume = mute_btn.toggle_mute(self.volume)
+
+        # adjust the volume bar to the new volume
         self.volbar.value_to_pos(self.volume, 100)
         pg.mixer.music.set_volume(self.volume / 100)
 
     def stop(self, stop_btn):
         stop_btn.log_click()
+
         if self.song_in_progress:          
 
             self.song_in_progress = False
@@ -153,6 +153,9 @@ class Console:
 
     def play(self, play_btn):
         play_btn.log_click()
+
+        # the song is started but not currently playing; 
+        # unpause the mixer if paused, else play the selected song
         if self.song_in_progress and not pg.mixer.music.get_busy():
             pause_btn = self._get_button('pause')
             if pause_btn.is_active:
@@ -160,6 +163,8 @@ class Console:
             else:
                 self.song_in_progress = False
                 self.play(play_btn)
+        
+        # if "play" but song is not started, activate play btn, deactivate stop btn, play currently loaded song
         elif not self.song_in_progress:
             play_btn.activate()
             self.song_in_progress = True
@@ -170,11 +175,14 @@ class Console:
 
     def pause(self, pause_btn):
         pause_btn.log_click()
+
+        # see README.md for closer look at this method
         play_btn = self._get_button('play')
         if self.song_in_progress and pg.mixer.music.get_busy():
             pause_btn.activate()            
             play_btn.activate(False)
             pg.mixer.music.pause()
+
         elif self.song_in_progress:
             pause_btn.activate(False)
             play_btn.activate()
@@ -182,6 +190,10 @@ class Console:
 
     def skip(self, skip_btn):
         skip_btn.log_click()
+
+        # skip logic: if song is started and currently playing, load a new song and play it
+        # if song is started but not currently playing, load a new song but do not start playing
+        # if song is not started load the next song but do not start playing
         is_busy = pg.mixer.music.get_busy()
         if self.song_in_progress and is_busy:
             self._load_song(skip_btn.label)
@@ -196,6 +208,7 @@ class Console:
 
     def seek(self, seek_btn, incr=SEEK_INCR):
         seek_btn.log_click()
+
         if seek_btn.label == 'rew':
             self.song_offset = self._get_position(self.song_offset, rew=incr)            
 
@@ -203,6 +216,8 @@ class Console:
             self.song_offset = self._get_position(self.song_offset, ff=incr)
         
         if pg.mixer.music.get_busy():
+            # 0 sets the number of loops (loop mode is handled differently in this program); 
+            # song_offset is the current song pos in seconds
             pg.mixer.music.play(0, self.song_offset)
 
     def volumize(self, vol_btn):
@@ -210,6 +225,8 @@ class Console:
 
         mute_btn = self._get_button('mute')
         if mute_btn.is_active:
+            # mute_btn is a specialized ToggleButton that can be held down
+            # this updates volume on the fly and adjusts the volume bar
             self.volume = mute_btn.toggle_mute(self.volume)   
 
         if vol_btn.label == 'volup' and self.volume < 100:
@@ -222,9 +239,14 @@ class Console:
 
     def toggle_mode(self, mode_btn):
         mode_btn.log_click()
+
+        # pass-thru function between main.py and ModeButton obj
         self.play_mode = mode_btn.toggle_mode()
 
     def adjust_volbar(self, click_x):
+
+        # pos_to_value gets new volume value based on x-axis mouse click if collision detected
+        # it readjusts the volbar to the new volume
         self.volume = self.volbar.pos_to_value(click_x, 100)
         pg.mixer.music.set_volume(self.volume / 100)
         self.volbar.value_to_pos(self.volume, 100)
@@ -234,7 +256,7 @@ class Console:
         new_position = self.progbar.pos_to_value(click_x, self.song_length)
         current_position = self._get_position(self.song_offset)
 
-        # simply access the seek function with calculated seek increments
+        # We can use the seek function with calculated seek increments; added default flag to seek() for seek_incr
         if new_position > current_position:
             ff_btn = self._get_button('ff')
             self.seek(ff_btn, incr=(new_position - current_position))
@@ -243,6 +265,8 @@ class Console:
             self.seek(rew_btn, incr=(current_position - new_position))
 
     def scroll(self, direction, page=False):
+
+        # pass-thru method between main() and ListUI obj
         self.list_ui.scroll(direction, page)
 
     def handle_misc_clicks(self, mouse_pos):
@@ -264,6 +288,7 @@ class Console:
         stop_btn = self._get_button('stop')
         if not stop_btn.is_active:
 
+            # otherwise load the next song automatically
             self.song_in_progress = False
             self._load_song('auto next')
             play_btn = self._get_button('play')
@@ -276,25 +301,56 @@ class Console:
                 (HEIGHT - self.goodbye_txt.get_height()) // 2))
 
         pg.display.update()
+
+        # if a song is playing, fade out the volume over 3 seconds
         if pg.mixer.music.get_busy():
             pg.mixer.music.fadeout(3000)
         pg.time.delay(3000)
+
+        # alert main() that the console has quit
         self.running = False
 
     ## PRIVATE METHODS
     ##
     def _get_formatted_duration(self):
 
+
         position = round(self._get_position(self.song_offset), 2)
 
+        # decimal formatting and conversion of seconds into mins/secs/tenths
+        # return a formatted string
         mins = "{:0>2d}".format(int(position // 60))
         secs = "{:0>2d}".format(int(position % 60))
         tenths = int(10 * (position % 60 - int(position % 60)))
 
         return f'{mins}:{secs}.{tenths}'
 
+    def _get_position(self, start_pos, rew=0, ff=0):
+
+        # This deceptively simple method took a very, very long time to figure out; pygame does not 
+        # have an easy way of tracking the time position of the song in general; it can only track 
+        # how long the current sound has been playing. So we use various global offsets to keep
+        # track of down time and adjust the position accordingly. position 0 = start of song.
+
+        if not self.song_in_progress: pos = 0
+        else: pos = pg.mixer.music.get_pos()    # get how long sound playing in ms
+        
+        position = pos / 1000 + start_pos - rew + ff    # offset with the passed input start_pos and re/ff incr
+
+        if position < 0:
+            # do not rew prior to the start of song
+            return 0
+        elif position > self.song_length:
+            # do not ff past the end of the song
+            return self.song_length - 1
+        else:
+            return position
+
     def _get_formatted_song_length(self):
         
+        # this looks almost identical to _get_formatted_duration() and is an oversight on my part;
+        # these methods can be combined b/c the only difference is the input position; here it is
+        # the total song duration and in the other it is a function to get song position
         position = self.song_length
 
         mins = "{:0>2d}".format(int(position // 60))
@@ -304,26 +360,15 @@ class Console:
         return f'{mins}:{secs}.{tenths}'
 
     def _display_duration(self):
+
+        # elapsed time
         time_played_text = self.font_duration.render(self._get_formatted_duration(), True, FONT_COLOR)
         self.win.blit(time_played_text, (5, ROW1_Y - BSIZE - 2*BPAD + 30))
 
+        # song length
         time_played_text = self.font_duration.render(self._get_formatted_song_length(), True, FONT_COLOR)
         self.win.blit(time_played_text, (self.progbar.rect_border.right + 4, ROW1_Y - BSIZE - 2*BPAD + 30))
         
-    def _get_position(self, start_pos, rew=0, ff=0):
-
-        if not self.song_in_progress: pos = 0
-        else: pos = pg.mixer.music.get_pos()
-        
-        position = pos / 1000 + start_pos - rew + ff
-
-        if position < 0:
-            return 0
-        elif position > self.song_length:
-            return self.song_length - 1
-        else:
-            return position
-
     def _load_song(self, selection='pass'):
 
         # LOAD LOGIC
@@ -377,9 +422,12 @@ class Console:
 
     def _log_song_length(self):
 
+        # borrow a method from NowPlaying obj to get the song duration in seconds
         self.song_length = self.now_playing.get_meta('length', self.now_playing_index)
 
     def _heed_list_signal(self):
+
+        # Here the console listens for a change song signal from ListUI obj
         if self.list_ui.change_signal:
             self._load_song('list')
             play_btn = self._get_button('play')
@@ -387,6 +435,8 @@ class Console:
             self.list_ui.change_signal = False
 
     def _get_button(self, label):
+
+        # method for retrieving a button sprite in order for other buttons to interact with it
         btns = []
         for btn in self.buttons.sprites():
             if btn.label == label:
@@ -397,6 +447,8 @@ class Console:
         # add setup icon to GroupSingle sprite group
         centeringx = (WIDTH - PAD*2 - BSIZE) // 2 + PAD
         centeringy = PAD + self.setup_txt.get_height() + PAD
+
+        # Add sprite to a SpriteSingle group. This is for convenient interaction
         self.setup_button.add(ToggleButton('menu', centeringx, centeringy))
 
         # add buttons to sprite group - passed functions do not include ()
@@ -416,16 +468,17 @@ class Console:
         )
 
     def _init_bars(self):
-        # volume bar
+        # volume bar - reqs the current volume and the max volume
         x = ROWPAD + 2*ROWSLOT
         w = WIDTH - ROWPAD - BSIZE - ROWSLOT - BPAD - x
         self.volbar = Slider(x, ROW2_Y + 10, w, BSIZE - 20, self.volume, 100)
 
-        # song progress bar
+        # song progress bar - reqs the current song position and the total song length
         self.progbar = Slider(BSIZE + BPAD, ROW1_Y - BSIZE + 2*BPAD, WIDTH - 2*(BSIZE + BPAD), BPAD - 1, self._get_position(self.song_offset), self.song_length)
 
     def _init_ui(self):
-        # init file display ui
+        
+        # init file display ui - reqs the song filepaths and the currently selected song (index)
         self.list_ui = ListUI(self.win, PAD//2, 2*PAD + 10, WIDTH - PAD, UI_HEIGHT, self.song_paths, self.now_playing_index)   
         # Now Playing infobar
         self.now_playing = NowPlaying(self.win, PAD//2, 2, WIDTH - PAD, 70, self.song_paths, self.now_playing_index)
@@ -433,6 +486,8 @@ class Console:
     ## RUN CONSOLE
     ##
     def run(self):
+
+        # display the background
         self.win.blit(self.bg, (0,0))
 
         if self.running:
@@ -451,11 +506,11 @@ class Console:
                 self.progbar.value_to_pos(self._get_position(self.song_offset), self.song_length)
                 self.progbar.draw()
 
-                # clickable songlist
+                # clickable songlist - listen for change signal from self.list_ui obj
                 self._heed_list_signal()
                 self.list_ui.update(self.now_playing_index)
                 self.list_ui.draw()
 
-                # infobar
+                # now playing info display
                 self.now_playing.update(self.now_playing_index)
                 self.now_playing.draw()

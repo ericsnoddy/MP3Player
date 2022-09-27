@@ -20,15 +20,15 @@ from obj.settings import (
     NP_FONTSIZE_ALBUM,
 )
 from obj.data import FONT_TYPE_REG, FONT_TYPE_BOLD
-from obj.debug import debug
 
 class NowPlaying:
     def __init__(self, win, x, y, w, h, song_paths, now_playing_index):
 
+        # display window and default rectangle
         self.win = win
         self.rect = pg.Rect(x, y, w, h)
 
-        # file info
+        # file info and currently
         self.song_paths = song_paths
         self.titles = self._get_titles_list(self.song_paths)
         self.now_playing_index = now_playing_index
@@ -46,9 +46,11 @@ class NowPlaying:
     def get_meta(self, key, playing_index):
         
         try:
+            # mutagen method for making an MP3 obj with metadata Dict we can read
+            # the values of the Dict are Lists, so we return the 0 index.
             meta = MP3(self.song_paths[playing_index], ID3=EasyID3)
         except:
-            meta = ''
+            return 'Unknown'
         
         if key == 'title':
             try:
@@ -84,8 +86,6 @@ class NowPlaying:
             except:
                 length = 0
             return length
-        else:
-            return 'Unknown'
 
     def _get_titles_list(self, song_paths):
         song_titles = []
@@ -99,15 +99,18 @@ class NowPlaying:
 
     def _get_scaled_text(self, old_text_width, font_type, font_color, text):
 
+        # set the default font size for each category
         if text == self.song: fontsize = NP_FONTSIZE_TITLE
         elif text == self.artist: fontsize = NP_FONTSIZE_ARTIST
         else: fontsize = NP_FONTSIZE_ALBUM
 
+        # overwrite the font size to rescale the text when it doesn't fit the display
         new_font_size = int(((self.rect.width - 4) / old_text_width) * fontsize)
         new_font = pg.font.Font(font_type, new_font_size)
         meta_text = new_font.render(text, True, font_color)
         width = meta_text.get_width()
 
+        # return the renderd text w/ font_type and font_color + text width
         return meta_text, width
 
     def update(self, new_index):
@@ -115,7 +118,7 @@ class NowPlaying:
         if self.now_playing_index != new_index:           
             self.now_playing_index = new_index
 
-            # the mutagen meta extraction module returns a list, so get first indexed value.
+            # refresh the metadata if a new song begins (self.now_playing_index has changed)
             self.artist = self.get_meta('artist', self.now_playing_index)
             self.album = self.get_meta('album', self.now_playing_index)
             self.song = self.get_meta('title', self.now_playing_index)
@@ -126,8 +129,11 @@ class NowPlaying:
             self.album_font = pg.font.Font(FONT_TYPE_REG, NP_FONTSIZE_ALBUM)
 
     def draw(self):
+
+        # draw the border
         pg.draw.rect(self.win, INFO_BORDER_COLOR, self.rect, 1)
 
+        # render the metadata for each category into text and get its width
         song_txt = self.song_font.render(self.song, True, FONT_COLOR_TITLE)
         song_w = song_txt.get_width()
 
@@ -202,29 +208,38 @@ class ListUI(NowPlaying):
 
     def scroll(self, direction, page=False):
 
+        # we want the scroll increments divisible by the LIST_ROW_HEIGHT
         mouse_scroll = LIST_ROW_HEIGHT * 4
         page_scroll = mouse_scroll * 6
 
         if direction == 'up': 
             if page:
+                # do not scroll up if we're at top of list
                 self.scroll_y = min(self.scroll_y + page_scroll, 0)
             else:
                 self.scroll_y = min(self.scroll_y + mouse_scroll, 0)
         elif direction == 'down':
             if page:
+                # do not scroll down past showing at least the ultimate title
                 self.scroll_y = max(self.scroll_y - page_scroll, -(self.list_surf.get_height()) + LIST_ROW_HEIGHT)
             else:
                 self.scroll_y = max(self.scroll_y - mouse_scroll, -(self.list_surf.get_height()) + LIST_ROW_HEIGHT)
 
     def change_index_click_detection(self, mouse_pos):
+
+        # if a collision is detected with the list and it's "legal" to click, get the row (song) index
         if self.rect.collidepoint(mouse_pos) and self.can_click:
             self._log_click()
+
             mouse_y = mouse_pos[1]
             # Derive the index of the song by tracking the y position and its offset and dividing by the row height
             row_index = (mouse_y - (self.rect.top + 1) - self.scroll_y) // LIST_ROW_HEIGHT
+
+            # If the list is clicked below the lowest title, assume the lowest title
             if row_index >= len(self.titles):
                 row_index = len(self.titles) - 1
 
+            # Signal to console to change the song
             if self.now_playing_index != row_index:
                 self.change_signal = True
                 self.change_index = row_index
@@ -249,18 +264,21 @@ class ListUI(NowPlaying):
             if current_time - self.click_time >= self.click_cooldown:
                 self.can_click = True
 
-    def _highlight_playing(self):
-        pass
-
     ## CONTINUOUS METHODS
     ##
     def update(self, new_index):
         if self.now_playing_index != new_index:
             self.now_playing_index = new_index
 
+            # only re-render the list on song change
+            # This is the biggest weakness of the program as it's heavy on processing
             self._enumerate_list()
+
+        # deny click spamming by allowing a click once every 300ms
         self._cooldown()
 
     def draw(self):
+
+        # draw the list border and display the list surface with scroll_y offset (a negative number)
         pg.draw.rect(self.win, LIST_BORDER_COLOR, self.rect, 1)
         self.win_sub.blit(self.list_surf, (4, self.scroll_y))

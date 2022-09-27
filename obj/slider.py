@@ -7,12 +7,14 @@ from obj.settings import BAR_BORDER_COLOR, BAR_COLOR
 class Slider:
     def __init__(self, x, y, width, height, initial_value, initial_max):
 
+        # get a reference to the display surface
         self.win = pg.display.get_surface()
         self.rect = pg.Rect(x, y, width, height)
         self.rect_border = pg.Rect(x, y, width, height)
         self.initial_value = initial_value
         self.max_value = initial_max
 
+        # set the initial position based on passed inputs
         self.value_to_pos(self.initial_value, self.max_value)
 
     def is_clicked(self, mouse_pos):
@@ -26,6 +28,7 @@ class Slider:
         try:
             # ratio
             self.rect.width = self.rect_border.width * (new_value / max_value)
+        # avoid dividing by zero
         except ZeroDivisionError:
             self.rect.width = 0
 

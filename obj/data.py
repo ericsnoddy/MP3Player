@@ -1,12 +1,15 @@
+# standard library
 from os.path import join
 
+# background
 BG_DEFAULT = join('assets', 'bg', 'space.png')
 
+# fonts
 FONT_TYPE_REG = join('assets', 'fonts', 'Xolonium-Regular.otf')
 FONT_TYPE_BOLD = join('assets', 'fonts', 'Xolonium-Bold.otf')
 
-BUTTONS = {
-    # buttons
+# button images; underscore indicates "active"
+BUTTONS = {    
     'ff': join('assets', 'buttons', 'ff.png'),
     'ff_': join('assets', 'buttons', 'ff_.png'),
     'loop': join('assets', 'buttons', 'loop.png'),

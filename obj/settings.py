@@ -33,9 +33,6 @@ BAR_COLOR = FONT_COLOR
 BAR_BORDER_COLOR = '#A6A8AC'
 LIST_BORDER_COLOR = INFO_BORDER_COLOR = BAR_BORDER_COLOR
 
-MENU_W = 150
-MENU_H = 100
-
 # initial volume (out of 100) and seek increment in seconds
 VOL_START = 75
 SEEK_INCR = 10  # seconds
