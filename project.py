@@ -47,6 +47,7 @@ def main():
 def event_handler(console, event):
 
     if event.type == MOUSEBUTTONDOWN:
+        print(console, event)
 
         # get clicked sprite (by filtering all sprites for click event - will return only single sprite)
         clicked = [btn for btn in console.buttons.sprites() if btn.is_clicked(event.pos)]
@@ -117,6 +118,7 @@ def event_handler(console, event):
 
 def parse_argv(args):
 
+    print(args)
     # command line args can be used to set the play mode
     # error 2 means user called -? for help; error 1 means syntax error (eg, both -L and -R called)
     error = False
@@ -162,6 +164,7 @@ def init_pygame():
 
     # init clock module for capping the framerate
     clock = pg.time.Clock()
+    print(type(clock))
 
     return win, clock
 
