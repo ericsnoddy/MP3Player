@@ -403,7 +403,10 @@ class Console:
         if self.play_mode == 'rand':
 
             if selection == 'prev' or selection == 'next' or selection == 'auto next':
-                self.now_playing_index = randrange(0, len(self.song_paths))
+                # do not skip to the same index
+                new_index = randrange(0, len(self.song_paths))
+                if new_index != self.now_playing_index:
+                    self.now_playing_index = new_index
 
         if selection == 'list':
             # overwrite any index change thus far
