@@ -1,5 +1,6 @@
 # TinyAmp, a lightweight mp3 player
-    #### Video Demo:  <URL HERE>
+    #### Video Demo:  https://youtu.be/_zttJiD64MY
+    #### Author: Eric A. Snoddy
     #### Description:
         # Opens a music folder preferably no more than a few hundred titles
         # Default opens to random title (see settings.py for OPEN_RANDOM_MODE)
@@ -13,8 +14,8 @@
         ### -L or -l opens in loop mode
         ### -? helps user with commands
 
-        # sample public domain mp3s are included as the default folder
-        # all licensing info in assets/Licensing.txt and assets/Xolonium License.txt
+        # ** sample public domain mp3s are included as the default folder
+        # ** all licensing info in assets/Licensing.txt
 
 Let's explore the program.
 
