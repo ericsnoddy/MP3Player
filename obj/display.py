@@ -43,6 +43,8 @@ class NowPlaying:
         self.artist_font = pg.font.Font(FONT_TYPE_REG, NP_FONTSIZE_ARTIST)        
         self.album_font = pg.font.Font(FONT_TYPE_REG, NP_FONTSIZE_ALBUM)
 
+    ## Public Functions
+    #
     def get_meta(self, key, playing_index):
         
         try:
@@ -87,6 +89,8 @@ class NowPlaying:
                 length = 0
             return length
 
+    ## Private Functions
+    #
     def _get_titles_list(self, song_paths):
         song_titles = []
         
@@ -113,6 +117,8 @@ class NowPlaying:
         # return the renderd text w/ font_type and font_color + text width
         return meta_text, width
 
+    ## Update and Run
+    #
     def update(self, new_index):
 
         if self.now_playing_index != new_index:           
@@ -185,27 +191,6 @@ class ListUI(NowPlaying):
         self.change_signal = False
         self.change_index = self.now_playing_index
 
-    def _enumerate_list(self):
-
-        f = pg.font.Font(FONT_TYPE_REG, LIST_FONTSIZE)
-        f_ = pg.font.Font(FONT_TYPE_BOLD, LIST_FONTSIZE)
-
-        # 'erase' the previous draw for a clean re-draw
-        self.list_surf.fill((0))
-
-        y = 1   # 1 px padding
-        for index, _ in enumerate(self.titles):
-            artist = self.get_meta('artist', index)
-            song = self.get_meta('title', index)
-
-            row = f'{artist} - {song}'
-
-            if self.now_playing_index != index:
-                self.list_surf.blit(f.render(row, True, LIST_FONT_COLOR), (0, y))
-            else: 
-                self.list_surf.blit(f_.render(row, True, FONT_COLOR), (0, y))
-            y += LIST_ROW_HEIGHT  # font is rendered with 1 px padding
-
     def scroll(self, direction, page=False):
 
         # we want the scroll increments divisible by the LIST_ROW_HEIGHT
@@ -252,7 +237,28 @@ class ListUI(NowPlaying):
             self.scroll_y = -(LIST_ROW_HEIGHT * index)
 
     ## PRIVATE METHODS
-    ##  
+    ## 
+    def _enumerate_list(self):
+
+        f = pg.font.Font(FONT_TYPE_REG, LIST_FONTSIZE)
+        f_ = pg.font.Font(FONT_TYPE_BOLD, LIST_FONTSIZE)
+
+        # 'erase' the previous draw for a clean re-draw
+        self.list_surf.fill((0))
+
+        y = 1   # 1 px padding
+        for index, _ in enumerate(self.titles):
+            artist = self.get_meta('artist', index)
+            song = self.get_meta('title', index)
+
+            row = f'{artist} - {song}'
+
+            if self.now_playing_index != index:
+                self.list_surf.blit(f.render(row, True, LIST_FONT_COLOR), (0, y))
+            else: 
+                self.list_surf.blit(f_.render(row, True, FONT_COLOR), (0, y))
+            y += LIST_ROW_HEIGHT  # font is rendered with 1 px padding
+
     def _log_click(self):
         self.click_time = pg.time.get_ticks()
         self.can_click = False

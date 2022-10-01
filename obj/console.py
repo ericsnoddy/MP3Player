@@ -251,6 +251,9 @@ class Console:
         self.volume = self.volbar.pos_to_value(click_x, 100)
         pg.mixer.music.set_volume(self.volume / 100)
         self.volbar.value_to_pos(self.volume, 100)
+        mute_btn  = self._get_button('mute')
+        if mute_btn.is_active:
+            mute_btn.activate(False)
 
     def adjust_progbar(self, click_x):
         # This returns the position mark in seconds we need to seek to
