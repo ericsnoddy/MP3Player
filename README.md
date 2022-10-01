@@ -17,9 +17,37 @@
         # ** sample public domain mp3s are included as the default folder
         # ** all licensing info in assets/Licensing.txt
 
-Let's explore the program.
+########################### SKILLS NECESSARY TO COMPLETE THIS PROJECT
 
-##
+# CS50 LESSONS:
+functions, variables, loops, exceptions, libraries, unit tests, OOP
+constants and importing from local files
+classes and inheritance; class instantiation and attributes
+super().__init__()
+file structure; dotted file structure
+importing images from folder
+parsing command line arguments
+public vs private methods
+keeping classes as independent as possible; a clear purpose for every file
+performance considerations
+
+# PYGAME:
+sprites and sprite groups, images, 'surfaces' and 'rectangles', drawing and updating
+click detection/collisions
+game and event loop; capping the framerate
+user the pygame.mixer.music module
+gathering input from the user: keyboard/mouse
+clickable/scrollable GUI
+rendering fonts/text
+passing functions as well as variables
+preventing input spam (eg, one click counting as a dozen due to program loop rate)
+setting custom event flags
+
+# GENERAL:
+image editing
+GUI design elemnts
+
+########################### LET'S EXPLORE THE PROGRAM
 
 # imported modules:
 
@@ -295,6 +323,4 @@ This is not a necessary folder and contains only sample public domain music for 
 program default folder suggestion in this cs50 version of the program but any folder containing mp3s or subfolders
 of mp3s can be opted.
 
-
-
-
+2022 Eric A. Snoddy
