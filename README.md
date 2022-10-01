@@ -1,4 +1,4 @@
-# TinyAmp, a lightweight mp3 player
+##### TinyAmp, a lightweight mp3 player
     #### Video Demo:  https://youtu.be/_zttJiD64MY
     #### Author: Eric A. Snoddy
     #### Description:
@@ -10,14 +10,14 @@
         # page up/ page down scrolls list        
         # toggle play mode between regular, random, loop w bottom left button
         # command line args open mp3 player in set play mode:
-        ### -R or -r opens in random mode
-        ### -L or -l opens in loop mode
-        ### -? helps user with commands
+        # -R or -r opens in random mode
+        # -L or -l opens in loop mode
+        # -? helps user with commands
 
         # ** sample public domain mp3s are included as the default folder
         # ** all licensing info in assets/Licensing.txt
 
-########################### SKILLS NECESSARY TO COMPLETE THIS PROJECT
+###### SKILLS NECESSARY TO COMPLETE THIS PROJECT
 
 # CS50 LESSONS:
 functions, variables, loops, exceptions, libraries, unit tests, OOP
@@ -47,7 +47,7 @@ setting custom event flags
 image editing
 GUI design elemnts
 
-########################### LET'S EXPLORE THE PROGRAM
+###### LET'S EXPLORE THE PROGRAM
 
 # imported modules:
 
@@ -61,8 +61,6 @@ at set coordinates, among other tools. tkinter, a popular user dialog module, is
 from the user. mutagen is a third party module for manipulating song files; it's needed to extract metadata including 
 song length, as pygame music has limited functionality in this area. (Calculating a song's time position is a real pain 
 that involves tracking how long current sound has been playing and offsets such as rewind and pause length.)
-
-###
 
 # mp3player/project.py
 
@@ -104,8 +102,6 @@ periods.
 At the end of every program loop, the screen is updated and the clock is ticked at a rate which forces the program to
 closely approximate the FPS in settings.py (program default is 60 FPS). This is to ensure consistent framerate across 
 devices.
-
-###
 
 # obj/console.py
 
@@ -185,8 +181,6 @@ initiated with the song file paths. At the end of setup, a song is loaded, highl
 
 console.run() contains all of the update and draw functions which loop every frame.
 
-###
-
 # obj/button.py
 
 This file contains all the Button sprite classes. Buttons generally handle just a few operations: tracking a cooldown 
@@ -214,8 +208,6 @@ def is_clicked(self, mouse_pos):
     sq = dx**2 + dy**2
     return True if sq < self.radius**2 else False
 
-##
-
 # obj/slider.py
 
 Contains 2 classes:
@@ -227,8 +219,6 @@ The slider can take a mouse click's x position and turn it into a new value (for
 it can in reverse take a value and adjust the slider's x position fill (for restoring the volume from mute, say).
 Another use is the progress bar; a mouse click can change the time position of the currently playing song.
 
-##
-
 # obj/settings.py
 # obj/data.py
 
@@ -236,8 +226,6 @@ Program constants (eg display WIDTH; FONTSIZE) and file path information conveni
 modules. Manipulating variables such as space padding in one place made visual design easier. Existence of settings.py
 constants does not necessarily mean the program is scalable by altering these constants; such manipulation would be
 very experimental.
-
-##
 
 # obj/display.py
 
@@ -295,8 +283,6 @@ the clickable/scrollable list:
         row_index = (mouse_y - (self.rect.top + 1) - self.scroll_y) // LIST_ROW_HEIGHT
 
 
-## 
-
 # obj/__init__.py
 
 From python documentation: "The __init__.py files are required to make Python treat directories containing the file as 
@@ -305,8 +291,6 @@ later on the module search path. In the simplest case, __init__.py can just be a
 
 "Users of the package can import individual modules from the package, for example."
 
-##
-
 # assets/bg
 # assets/fonts
 # assets/buttons
@@ -314,8 +298,6 @@ later on the module search path. In the simplest case, __init__.py can just be a
 Contains the .png image files and .otf fonts used in the program. Licensing for all assets is contained in the root 
 folder file called 'Licensing.txt'. I had to do some photshopping to get buttons into their final form, cut out from
 a "sheet" and placed onto transparent backgrounds.
-
-## 
 
 # public_domain_mp3s/*.mp3
 
