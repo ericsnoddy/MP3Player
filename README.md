@@ -17,6 +17,11 @@
         # ** sample public domain mp3s are included as the default folder
         # ** all licensing info in assets/Licensing.txt
 
+##### LIBRARY DEPENDENCIES - pip install
+pygame
+tk (tkinter)
+mutagen
+
 ###### SKILLS NECESSARY TO COMPLETE THIS PROJECT
 
 # CS50 LESSONS:
