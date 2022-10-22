@@ -19,7 +19,9 @@
 
 ##### LIBRARY DEPENDENCIES - pip install
 pygame
+
 tk (tkinter)
+
 mutagen
 
 ###### SKILLS NECESSARY TO COMPLETE THIS PROJECT
