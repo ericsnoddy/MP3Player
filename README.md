@@ -18,6 +18,7 @@
         # ** all licensing info in assets/Licensing.txt
 
 ##### LIBRARY DEPENDENCIES - pip install
+
 pygame
 
 tk (tkinter)
@@ -27,31 +28,53 @@ mutagen
 ###### SKILLS NECESSARY TO COMPLETE THIS PROJECT
 
 # CS50 LESSONS:
+
 functions, variables, loops, exceptions, libraries, unit tests, OOP
+
 constants and importing from local files
+
 classes and inheritance; class instantiation and attributes
+
 super().__init__()
+
 file structure; dotted file structure
+
 importing images from folder
+
 parsing command line arguments
+
 public vs private methods
+
 keeping classes as independent as possible; a clear purpose for every file
+
 performance considerations
 
 # PYGAME:
+
 sprites and sprite groups, images, 'surfaces' and 'rectangles', drawing and updating
+
 click detection/collisions
+
 game and event loop; capping the framerate
+
 user the pygame.mixer.music module
+
 gathering input from the user: keyboard/mouse
+
 clickable/scrollable GUI
+
 rendering fonts/text
+
 passing functions as well as variables
+
 preventing input spam (eg, one click counting as a dozen due to program loop rate)
+
 setting custom event flags
 
 # GENERAL:
+
 image editing
+
 GUI design elemnts
 
 ###### LET'S EXPLORE THE PROGRAM
@@ -92,11 +115,17 @@ example:
 
 
 if event.type == MOUSEBUTTONDOWN:
+
     clicked = [btn for btn in console.buttons.sprites() if btn.is_clicked(event.pos)]
+    
     for btn in clicked:
+    
         ...
+        
         if btn.label == 'mode' and btn.can_click:
+        
             console.toggle_mode(btn))
+            
         ...
 
 
@@ -123,17 +152,21 @@ The buttons do not handle the media functions themselves, except in rare circums
 
 Many of the media functions in console.py must interact with each other. Since media function methods input only the 
 button intended for the primary function--eg, the stop_btn obj when stop button is activated--I wrote a private method 
-self._get_button(btn) that retrieves the relevent buttons for interacting from within other subclasses. In the method 
+self.\_get_button(btn) that retrieves the relevent buttons for interacting from within other subclasses. In the method 
 console.stop(stop_btn), eg, we need to deactivate play and pause if those buttons are active at the time the stop 
 button is clicked:
 
 
+def \_get_button(self, label):
 
-def _get_button(self, label):
     btns = []
+    
     for btn in self.buttons.sprites():
+    
         if btn.label == label:
+        
             btns.append(btn)
+            
     return btns[0]
 
 
@@ -144,27 +177,37 @@ Here is an example media function:
 
 def pause(self, pause_btn):
 
-    # log the click time to begin cooldown period
+    \# log the click time to begin cooldown period
+    
     pause_btn.log_click()
 
-    # get the play button obj
+    \# get the play button obj
+    
     play_btn = self._get_button('play')
 
-    # global flag for song has been started is True and pygame check for song is playing (not paused) is True
+    \# global flag for song has been started is True and pygame check for song is playing (not paused) is True
+    
     if self.song_in_progress and pg.mixer.music.get_busy():
 
-        # if both True, activate the pause button; deactivate the play button; pause the mixer 
+        \# if both True, activate the pause button; deactivate the play button; pause the mixer 
+        
         pause_btn.activate()            
+        
         play_btn.activate(False)
+        
         pg.mixer.music.pause()
 
-    # if the song has been started but it's not currently playing it must be paused; unpause the mixer
+    \# if the song has been started but it's not currently playing it must be paused; unpause the mixer
+    
     elif self.song_in_progress:
+    
         pause_btn.activate(False)
+        
         play_btn.activate()
+        
         pg.mixer.music.unpause()
 
-    # if a song has not been started do nothing
+    \# if a song has not been started do nothing
 
 
 console.py handles song-over events, exiting, metadata extraction (using display.py method), displaying the song 
@@ -176,6 +219,7 @@ order to keep the code clean and readable:
 
 
 def scroll(self, direction, page=False):
+
     self.list_ui.scroll(direction, page)
 
 
@@ -196,11 +240,17 @@ status of the button--an active button is a negative image of the inactive butto
 inheritance:
 
 ToggleButton(pygame.sprite.Sprite) - A button that activates on click, deactivates on second click
+
 ----HoldButton(ToggleButton) - A button that is active when held and inactive when not held
+
 ----MuteButton(ToggleButton) - Customized to return a volume - tracks a saved volume variable
+
 ----StopButton(ToggleButton) - Customized to begin in the activated state
+
 ----QuickButton(ToggleButton) - customized to be active only during cooldown period
+
 --------SeekButton(QuickButton) - customized QuickButton to have very short cooldown
+
 ModeButton(pygame.sprite.Sprite) - toggles between 3 states instead of 2 states. Relays toggle state to Console.
 
 pygame sprites are objects that have an "image" and a "rectangle" atrribute. a rectangle in pygame is a specific region
@@ -210,9 +260,13 @@ An example class function, is_clicked(mouse_pos) looks like this, a Pythagorean 
 radius:
 
 def is_clicked(self, mouse_pos):
+
     dx = self.rect.centerx - mouse_pos[0]
+    
     dy = self.rect.centery - mouse_pos[1]
+    
     sq = dx**2 + dy**2
+    
     return True if sq < self.radius**2 else False
 
 # obj/slider.py
@@ -253,21 +307,26 @@ the highlighting when a new song plays. Perhaps I'll figure it out in future ver
 The list is rendered row by row as follows:
 
 
-def _enumerate_list(self):
+def \_enumerate_list(self):
 
     ...
 
     y = 1   # 1 px padding
+    
     for index, _ in enumerate(self.titles):
+    
         artist = self.get_meta('artist', index)
+        
         song = self.get_meta('title', index)
 
         row = f'{artist} - {song}'
 
         if self.now_playing_index != index:
 
-            # if the song changes, re-render which song is displayed with highlight text
-            # blit is the method for drawing image rectangles onto surfaces
+            \# if the song changes, re-render which song is displayed with highlight text
+            
+            \# blit is the method for drawing image rectangles onto surfaces
+            
             self.list_surf.blit(f.render(row, True, LIST_FONT_COLOR), (0, y))
         else: 
             self.list_surf.blit(f_.render(row, True, FONT_COLOR), (0, y))
@@ -280,13 +339,16 @@ the clickable/scrollable list:
 
  def change_index_click_detection(self, mouse_pos):
 
-    # pygame function to detect rect collisions
+    \# pygame function to detect rect collisions
+    
     if self.rect.collidepoint(mouse_pos) and self.can_click:
     
         self._log_click()
+        
         mouse_y = mouse_pos[1]
 
-        # Derive the index of the song by tracking the y position and its offset and dividing by the row height
+        \# Derive the index of the song by tracking the y position and its offset and dividing by the row height
+        
         row_index = (mouse_y - (self.rect.top + 1) - self.scroll_y) // LIST_ROW_HEIGHT
 
 
