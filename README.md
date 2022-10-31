@@ -21,7 +21,7 @@
 
 pygame
 
-tk (tkinter)
+tk
 
 mutagen
 
