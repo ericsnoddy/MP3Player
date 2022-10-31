@@ -95,7 +95,7 @@ class Console:
 
             # get folder - see event_handler in main() and flag in self.handle_misc_clicks()
             if self.setup_button_clicked:
-                self.music_folder = fd.askdirectory( title='Select folder; first option is default', initialdir='public_domain_mp3' )
+                self.music_folder = fd.askdirectory( title='Navigate to MP3 Folder' )
 
         # do not proceed without proper filepath to music folder
         elif not self.song_paths:
