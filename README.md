@@ -1,8 +1,8 @@
-##### TinyAmp, a lightweight mp3 player
+##### TinyAmp, a lightweight mp3 player - **NEEDS PLAYLIST RENDERING OPTIMIZATION**
     #### Video Demo:  https://youtu.be/_zttJiD64MY
     #### Author: Eric A. Snoddy
     #### Description:
-        # Opens a music folder preferably no more than a few hundred titles
+        # Opens a music folder preferably no more than a few hundred titles **see warning above
         # Default opens to random title (see settings.py for OPEN_RANDOM_MODE)
         # buttons, sliders, and scrollable list fully interactive to play mp3s
         # metadata is scraped and displayed if available
